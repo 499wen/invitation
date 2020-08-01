@@ -25,7 +25,7 @@
 		<div class="iContent flex">
 			<div class="content-middle ml15 justify-center" style="padding-right: 15px;width:100%;">
 				<!-- 长页邀请函 -->
-				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ dataCollection[curPage - 1].model.img +');'" v-if="isLongPage">
+				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ tempData.selBg.imgSrc +');'" v-if="isLongPage">
 					<div id="mc">
 						<div id="phonecontent">
 							<div class="phone-item" :style="'height:'+ dataCollection[curPage - 1].model.height +'px;'" @drop="dropTest($event)"

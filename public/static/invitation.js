@@ -478,6 +478,7 @@ export function reduction(_this){
 	let node
 	vue = _this
 
+	console.log(_this.curPage)
 	for(let item of dataCollection[curPage - 1].dataPre){
 		var data = item.value.type
 		
@@ -652,6 +653,16 @@ document.body.onmousemove = function(event) {
 
 function move(moveX, moveY) {
 	$(currentNode).css('transform', 'translate(' + (nodeX + moveX) + 'px,' + (nodeY + moveY) + 'px)');
+
+	var id = $(currentNode)[0].id
+	var dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+	
+	dataPre.filter( item => {
+		if(id == item.key){	
+			item.value['el-x'] = nodeX + moveX
+			item.value['el-y'] = nodeY + moveY
+		}
+	})
 }
 
 function topResize(moveX, moveY) {
