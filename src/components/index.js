@@ -6,6 +6,7 @@ import QRCode from "qrcodejs2";
 
 import {
   hideBox,
+  eachPageData,
   idMap,
   nodeStyleMap,
   nodes,
@@ -17,7 +18,7 @@ import {
   imageDragover
 } from "../../public/static/invitation.js";
 
-var token = localStorage.getItem("token");
+var token = localStorage.getItem("token"), t = null
 
 export default {
   props: ["meetId"], //props
@@ -29,14 +30,25 @@ export default {
        *  { 
        *    page: '1',  // 页码标识
        *    dataPre: [], // 每页对应的元素映射
-       *    eleList: [] // 保存每页的元素列
+       *    eleList: [], // 保存每页的元素列
+       *    model: {}, // 模板相应数据
        *  }
        * ]
        * 
        */
-      dataCollection: [], // 数据收集
+      dataCollection: [
+        {
+          page: 1,
+          dataPre: [],
+          eleList: [],
+          model: {
+            height: 649,
+            width: 375,
+            img: '../assets/temp-01.jpg'
+          }
+        }
+      ], // 数据收集
       curPage: 1, // 当前页数
-
       activeName: [],
       location: window.location.host,
       headers: {
@@ -75,7 +87,7 @@ export default {
         duties: true,
         email: true
       },
-
+      eleColumn: '1',
       // letterProduction: {
       // 	imgList: ['封面'],
       // },
@@ -130,9 +142,20 @@ export default {
     // }
     //
 
+   return
     // 模拟数据
-    var dataCollection = JSON.parse(localStorage.getItem('dataCollection'))
-
+    var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
+                          [{
+                              page: 1,
+                              dataPre: [],
+                              eleList: [],
+                              model: {
+                                height: 649,
+                                width: 375,
+                                img: '../assets/temp-01.jpg'
+                              }
+                          }]
+    
     // 数据初始化
     this.dataCollection = dataCollection
     this.curPage = 1
@@ -141,6 +164,10 @@ export default {
     reduction(this)
   },
   watch: {
+    // ["dataCollection[0].dataPre"]: function (val){
+    //   console.log(val)
+    // },
+
     // 监听defaultStyle下的fontFamily，即字体  : "",
     "defaultStyle.fontFamily": function(val) {
       this.defaultStyle.fontFamily = val
@@ -263,15 +290,48 @@ export default {
     },
     // 当鼠标在伸缩盒子上按下
     elongateDown: function(e) {
-      console.log(e.target)
-      this.tempScreenY = e.screenY;
-      this.isElongate = true;
-      let this_ = this;
-      document.addEventListener('mouseup', function(e) {
-        clearInterval(this_.longInterval);
-        // console.log(this_.isElongate)
-        this_.isElongate = false;
-      });
+      console.log(e.target, e.screenY)
+      // this.tempScreenY = e.screenY;
+      // this.isElongate = true;
+      let this_ = this, sign, defaultY = e.screenY
+      $('.justify-center')[0].onmousemove = function(e){
+        // 清空定时器
+        t && clearInterval(t)
+        /**
+         * defaultY < e.screenY ? 
+         *    模板拉长  :
+         *    模板变短 (最短649)
+         */
+        if(defaultY < e.screenY){
+          sign = 'down'
+        }
+        
+        if(defaultY > e.screenY){
+          sign = 'up'
+        }
+        
+        // 记录上一次的值
+        defaultY = e.screenY
+        t = setInterval(() => {
+          if(sign == 'down'){
+            
+            this_.dataCollection[this_.curPage - 1].model.height += 1
+          } else if(sign == 'up'){
+            if(this_.dataCollection[this_.curPage - 1].model.height > 649){
+              this_.dataCollection[this_.curPage - 1].model.height -= 1
+            }
+          }
+        }, 1)
+      }
+
+      $('.justify-center')[0].onmouseup = function(e){
+        if(t){
+          clearInterval(t)
+        }
+        $('.justify-center')[0].onmousemove = null
+        $('.justify-center')[0].onmouseup = null
+      }
+
     },
     // 当鼠标在伸缩盒子上按下
     elongateMove: function(e) {
@@ -318,11 +378,6 @@ export default {
     //  formConfig改变时刷新form表单
     initForm: function() {
       addSubmitForm(this);
-    },
-    // 删除页面
-    deletePage: function(idx) {
-      this.tempData.list.splice(idx, 1);
-      console.log(this.tempData.list[idx]);
     },
     // 打开选择背景图片的弹出层
     imgPopupToggle: function() {
@@ -375,18 +430,34 @@ export default {
     selectItem: function(id) {
       $(".check").removeClass("check");
       //1.判断是哪个页面 展示该页面 然后click
-      var key = idMap.get(id);
-      if (key !== this.showKey) {
-        this.contentClick(key);
-      }
+      // var key = idMap.get(id);
+      // if (key !== this.showKey) {
+      //   this.contentClick(key);
+      // }
+
       $("#" + id).click();
       $("#itemId" + id).addClass("check");
     },
 
     contentClick: function(index) {
-      this.switchImg = index;
-      this.showKey = index;
-      this.longPageHeight = this.longPageHeightArray[index] || 649;
+      // 清空模板中的元素 dom
+      $('.phone-item').empty()
+
+      // 更新页码
+      this.curPage = index + 1
+
+      // 还原元素
+      reduction(this)
+    },
+    // 重置数据
+    empty(){
+      // 清空 tNode
+      this.tNode = null
+
+      this.defaultStyle = {}
+
+      // 清空模板中的元素 dom
+      $('.phone-item').empty()
     },
 
     showSubmitForm: function() {
@@ -678,20 +749,40 @@ export default {
       // this.letterProduction.imgList.push('内容')
       // console.log('内容', this.letterProduction.imgList, this.letterProduction.imgList.length)
 
-      this.tempData.list.push({
-        id: (this.tempData.list[this.tempData.list.length - 1].id + 1),
-        msg: ""
-      });
-      this.longPageHeightArray.push(649)
-      let cta = document.querySelector(".iLeft");
-      cta.scrollTop = cta.scrollHeight;
+      // this.tempData.list.push({
+      //   id: (this.tempData.list[this.tempData.list.length - 1].id + 1),
+      //   msg: ""
+      // });
+      // // this.longPageHeightArray.push(649)
+      // let cta = document.querySelector(".iLeft");
+      // cta.scrollTop = cta.scrollHeight;
+
+      // 重置数据
+      this.empty()
+
+      // 修改当前页
+      this.curPage ++ 
+
+      // 添加新页 数据
+      this.dataCollection.push(eachPageData(this))
     },
     // 删除页面
-    closePage(idx) {
-      // if (this.letterProduction.imgList.length == 1) {
-      //  this.$message.error;
-      // }
-      // this.letterProduction.imgList.splice(idx, 1);
+    deletePage(idx) {
+      // 重置数据
+      this.empty()
+      
+      // 判断idx 与 curPage大小关系
+      if(idx < this.curPage){
+        this.curPage --
+      }
+
+      // 删除 dataCollection 对应列
+      this.dataCollection.filter((item, index) => 
+        index == idx && this.dataCollection.splice(index, 1)
+      )
+
+      // 修改 对应的page 值
+      this.dataCollection.filter(( item, index) => item.page = index + 1)
     },
     clickTag: function(e) {
       hideBox();

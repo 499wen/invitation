@@ -15,6 +15,21 @@ let nodeHeight;
 let moveMethod;
 let vue = null
 let defaultStyle = null
+
+// 每页的数据格式
+export function eachPageData(_this) {
+	return {
+		page: _this.curPage,
+		dataPre: [],
+		eleList: [],
+		model: {
+			width: 375,
+			height: 649,
+			img: '../assets/temp-01.jpg'
+		}
+	}
+}
+
 // 文本
 var textStyle = {
 	"opacity": 100, // 透明度
@@ -33,7 +48,6 @@ var textStyle = {
 	"height": '40px', // 文本基础高度
 	'el-x': '', // 创建的文本元素距离模板左的距离
 	'el-y': '', // 创建的文本元素距离模板上的距离
-
 
 	"textColor": "#2c3e50", // 字体颜色
 	"fontFamily": "微软雅黑", // 字体
@@ -68,7 +82,7 @@ var imgStyle = {
 	"url": '', // 图片链接
 }
 
-import $ from 'jquery'
+import $, { data } from 'jquery'
 
 window.allowDrop = function(event) {
 	event.preventDefault();
@@ -130,16 +144,19 @@ export function drop(event, _this) {
 	}
 	
 	hideBox()
-	console.log(event)
 	//确定鼠标位置
 	let x = event.layerX - 80;
 	let y = event.layerY - 20;
 	console.log("xy = " + x, y)
+
+	// 将坐标x, y 保存默认数据中 defaultStyle
+	defaultStyle['el-x'] = x
+	defaultStyle['el-y'] = y
+
 	// 将当前dom 放入vue.tNode 中
 	_this.tNode = node
 	_this.defaultStyle = defaultStyle
 
-	console.log(node)
 	// 配置唯一ID
 	node.id = uuid()
 	console.log("node = "+node)
@@ -153,8 +170,9 @@ export function drop(event, _this) {
 	 *    不存在：创建一条新记录,
 	 *      { 
 						page: '1',  // 页码标识
-						dataPre: [],  // 每页对应的元素映射
-						eleList: [] // 保存每页的元素列
+						dataPre: [], // 每页对应的元素映射
+						eleList: [], // 保存每页的元素列
+						model: {}, // 模板相应数据
 					}
 					在dataPre中添加新 映射对象
 					在eleList中添加新 记录
@@ -164,40 +182,44 @@ export function drop(event, _this) {
 					在eleList中添加新 记录
 	 */
 
-	if(_this.curPage > _this.dataCollection.length){
-		// 创建新记录
-		_this.dataCollection.push({
-			page: _this.curPage,
-			dataPre: [],
-			eleList: []
-		})
-	} 
+	// if(_this.curPage > _this.dataCollection.length){
+	// 	// 创建新记录
+	// 	_this.dataCollection.push(eachPageData(_this))
+	// } 
 
-	// 插入新的 映射对象
-	_this.dataCollection[_this.curPage - 1].dataPre.push({key: node.id, value: defaultStyle})
-	// 插入新的 元素列
-	_this.dataCollection[_this.curPage - 1].eleList.push({ id: node.id, nodeValue })
+	console.log('当前页', _this.curPage - 1)
+
+	_this.dataCollection.filter( item => {
+		if(item.page == _this.curPage){
+			console.log(1)
+			item.dataPre.push({key: node.id, value: defaultStyle})
+			item.eleList.push({ id: node.id, nodeValue })
+		}
+	})
+	// // 插入新的 映射对象
+	// _this.dataCollection[_this.curPage - 1].
+	// // 插入新的 元素列
+	// _this.dataCollection[_this.curPage - 1].
 
 
 	// 元素列
-	_this.idList.push({ id: node.id, nodeValue })
+	// _this.idList.push({ id: node.id, nodeValue })
 
-	idMap.set(node.id,_this.showKey)
+	// idMap.set(node.id,_this.showKey)
 	
-	nodeStyleMap.set(node.id,defaultStyle)
+	// nodeStyleMap.set(node.id,defaultStyle)
 	
 	// 设置元素位置和样式
 	// $(node).css('display', 'block')
 	// $(node).css('position', 'absolute')
 	// console.log("设置 xy = " + x, y)
-	$(node).css('transform', "translate(" + x + "px," + y + "px)")
+	// $(node).css('transform', "translate(" + x + "px," + y + "px)")
 
-	// 将坐标x, y 保存默认数据中 defaultStyle
-	defaultStyle['el-x'] = x
-	defaultStyle['el-y'] = y
 
+
+	console.log(defaultStyle)
 	// 把控件保存起来
-	nodes.set(node.id, node)
+	// nodes.set(node.id, node)
 
 	// 渲染 当前dom
 	renderingDom(data, defaultStyle)
@@ -207,6 +229,24 @@ export function drop(event, _this) {
 		e.stopPropagation()
 		e.preventDefault()
 		hideBox()
+		// 更换 当前操作元素 vue.tNode
+		vue.tNode = node
+		// console.log(vue.tNode)
+		// 获取元素 id
+		let id = $(node).attr('id')
+
+		// 拿到 dataCollection 中与 id匹配的数据 把数据赋值给 vue.defaultStyle
+		let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+		dataPre.filter( item => item.key == id ? vue.defaultStyle = item.value : '')
+
+		if(vue.defaultStyle.type == 'image'){
+			vue.isImage = true
+		} else {
+			vue.isImage = false
+		}
+
+		$('.invite-text-box-border').css('display', 'none')
+
 		$(this).find('.invite-text-box-border').css('display', 'block')
 		$(this).find('.btn-upload').css('display', 'block')
 		var but = document.getElementById("itemId"+node.id);
@@ -223,16 +263,7 @@ export function drop(event, _this) {
 		// $('#baseStyle').click();
 	})
 
-	// $(node).keydown(function (e) {
-	//     console.log(this.id,e.keyCode,e)
-	//     if(e && e.keyCode==46){
-	//         nodes.delete(this.id)
-	//         $(this).remove()
-	//     }
-	// })
-
 	// 给控件绑定鼠标按下的事件
-
 	$(node).mousedown(function(e) {
 		// 鼠标按下时，初始化当前控件的各项属性
 		// if ($(e.target).hasClass('edit-text')) {
@@ -284,7 +315,7 @@ function renderingDom(elType, obj){
 	let tNode = vue.tNode
 	console.log(tNode, obj)
 
-	// 给tNode 编写css属性
+	// 给tNode 编写css属性 
 	tNode.style = `
 		opacity: ${obj.opacity / 100};
 		border-color: ${obj.borderColor};
@@ -367,8 +398,6 @@ export function initNode(node, _this,text) {
 	
 
 	nodes.set($(node).attr('id'), node)
-	
-
 	
 	$(node).click(function(e) {
 		e.stopPropagation()
@@ -470,12 +499,19 @@ export function reduction(_this){
 		node.id = item.key
 		
 		_this.tNode = node
+		// 元素数据赋值给 vue.defaultStyle
+		_this.defaultStyle = defaultStyle
+
 		// 渲染dom
 		renderingDom(data, defaultStyle)
+		
 		// 元素附加拖动效果
 		dropEffect(node, _this)
 
 		document.querySelector('.phone-item').appendChild(node)
+
+		// 去除选中标识
+		$('.invite-text-box-border').css('display', 'none')
 	}
 }
 
@@ -485,6 +521,24 @@ function dropEffect(node, _this){
 		e.stopPropagation()
 		e.preventDefault()
 		hideBox()
+
+		// 更换 当前操作元素 vue.tNode
+		vue.tNode = node
+
+		// 获取元素 id
+		let id = $(node).attr('id')
+
+		// 拿到 dataCollection 中与 id匹配的数据 把数据赋值给 vue.defaultStyle
+		let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+		dataPre.filter( item => item.key == id ? vue.defaultStyle = item.value : '')
+
+		if(vue.defaultStyle.type == 'image'){
+			vue.isImage = true
+		} else {
+			vue.isImage = false
+		}
+		// 去除选中标识
+		$('.invite-text-box-border').css('display', 'none')
 		$(this).find('.invite-text-box-border').css('display', 'block')
 		// _this.initTemplateCss(this)
 		
@@ -493,7 +547,9 @@ function dropEffect(node, _this){
 			 _this.activeName.push("2")
 			 _this.activeName.push("3")
 		}
-			
+
+		// 查看tNode
+		console.log()
 	})
 	$(node).mousedown(function(e) {
 
@@ -580,6 +636,8 @@ document.body.onmousemove = function(event) {
 	// console.log("move = " +moveX,moveY,(nodeX+moveX),(nodeY+moveY))
 	if (moveMethod == 'move') {
 		console.log("move")
+		// 移动时修改鼠标样式
+		event.path[0].style.cursor = 'move'
 		move(moveX, moveY)
 	} else if (moveMethod == 'topResize') {
 		topResize(moveX, moveY)

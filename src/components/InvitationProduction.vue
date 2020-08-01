@@ -1,13 +1,13 @@
 <template>
-	<div class="invitation not_select" @mousemove="elongateMove">
+	<div class="invitation not_select">
 		<!-- 添加页面 -->
 		<div class="iLeft">
 			<!-- <div @click="generateQrCode">获取css</div> -->
 			<div class="title">页面管理</div>
 			<ul class="page_num_ul">
-				<li v-for="(item,index) in tempData.list" :key="item.id" :class="{'page_num':true,'page_active':switchImg==index}"
+				<li v-for="(item,index) in dataCollection" :key="item.id" :class="{'page_num': true,'page_active': curPage == index + 1}"
 				 @click="contentClick(index)">
-					<div class="page_txt">第{{index+1}}页
+					<div class="page_txt">第{{ index + 1 }}页
 						<div class="deleteIcon" v-if="index != 0" @click.stop="deletePage(index)">×</div>
 					</div>
 					<!-- <p class="el-icon-close closeImg" v-if="index != 0" @click.stop="tempData.list.splice(index, 1),showKey = 0"></p> -->
@@ -25,11 +25,11 @@
 		<div class="iContent flex">
 			<div class="content-middle ml15 justify-center" style="padding-right: 15px;width:100%;">
 				<!-- 长页邀请函 -->
-				<div class="po-r phone-long" :style="'text-align:center;height:'+longPageHeight+'px;background-image: url('+tempData.selBg.imgSrc+');'" v-if="isLongPage">
+				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ dataCollection[curPage - 1].model.img +');'" v-if="isLongPage">
 					<div id="mc">
 						<div id="phonecontent">
-							<div :id="'contentId'+key" class="phone-item" :style="'height:'+longPageHeight+'px;'" v-for="(val, key) in tempData.list" :key="key" v-show="showKey == key" @drop="dropTest($event)"
-							 v-html="pageContent[key]" @dragover="allowDrop($event)">
+							<div class="phone-item" :style="'height:'+ dataCollection[curPage - 1].model.height +'px;'" @drop="dropTest($event)"
+							  @dragover="allowDrop($event)">
 							</div>
 						</div>
 					</div>
@@ -37,7 +37,7 @@
 						<div></div>
 					</div>
 					<div class="longpage_pixel" draggable="false">
-						375 x {{longPageHeight}}
+						375 x {{ dataCollection[curPage - 1].model.height }}
 					</div>
 					<!-- 鼠标悬停后展示二维码 -->
 					<div class="show_qrcode" @click="codeVisible=!codeVisible">
@@ -85,7 +85,7 @@
 			</div>
 
 			<!--  -->
-			<div id="templateStyle" v-if="showStyle">
+			<div id="templateStyle" v-if="tNode">
 				<el-collapse v-model="activeName">
 					<el-collapse-item title="基本样式" name="1" style="padding-right: 15px;">
 						<div class="layui-colla-content layui-show">
@@ -363,7 +363,7 @@
 
 		<!-- 模板中存在的元素列 -->
 		<div class="iRight mini_iRight">
-			<el-collapse>
+			<el-collapse v-model="eleColumn" accordion>
 				<el-collapse-item title="元素列" name="1">
 					<div v-if="dataCollection[curPage - 1]">
 						<div class="ele_btn clear_float" v-for="(item,index) in dataCollection[curPage - 1].eleList" :key="item.id">
