@@ -1,4 +1,4 @@
-import $ from "jquery";
+import $, { data } from "jquery";
 
 
 import QRCode from "qrcodejs2";
@@ -32,6 +32,14 @@ export default {
        *    dataPre: [], // 每页对应的元素映射
        *    eleList: [], // 保存每页的元素列
        *    model: {}, // 模板相应数据
+       *    formAttr: { // 表单相应数据
+              'enable': false, // 使用表单标记
+              'sex': false, // 性别
+              'company': false, // 单位
+              'department': false, // 部门
+              'post': false, // 职务
+              'email': false // 电子邮件
+            },
        *  }
        * ]
        * 
@@ -45,7 +53,15 @@ export default {
             height: 649,
             width: 375,
             img: '../assets/temp-01.jpg'
-          }
+          },
+          formAttr: {
+            'enable': true, // 使用表单标记
+            'sex': true, // 性别
+            'company': true, // 单位
+            'department': true, // 部门
+            'post': true, // 职务
+            'email': true // 电子邮件
+          },
         }
       ], // 数据收集
       curPage: 1, // 当前页数
@@ -141,8 +157,24 @@ export default {
     // 	meetingId = this.meetId;
     // }
     //
+    
+    var dom = document.querySelector("#phone-item")
+    // 移入事件
+    dom.onmousemove = () => {
+      document.oncontextmenu = function (event) {
+        console.log('move')
+        return false
+      }
+    }
 
-   return
+    // 移出事件
+    dom.onmouseout = () => {
+      document.oncontextmenu = function (event) {
+        console.log('out')
+        return true
+      }
+    }
+  //  return
     // 模拟数据
     var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
                           [{
@@ -271,7 +303,9 @@ export default {
   },
   methods: {
     changeZindex: function(val) {
+      console.log('置顶， 置底')
       $(this.tNode).css('z-index', val)
+      this.defaultStyle['z-index'] = val
     },
     // 用户选择默认的字体颜色或背景颜色
     setColor: function(colorType, val) {
@@ -376,8 +410,25 @@ export default {
     //  当鼠标松开
     elongateUp: function(e) {},
     //  formConfig改变时刷新form表单
-    initForm: function() {
-      addSubmitForm(this);
+    initForm: function(val, need = 'update') {
+      // addSubmitForm(this);
+      if(val){
+        var dom = document.querySelector("." + val)
+        var bool = this.dataCollection[this.curPage - 1].formAttr[val]
+        console.log(val, '=', bool)
+        // var formParent = document.querySelector('.formTemplate .invite-text-box-text')
+        if(bool){
+          dom.style.display = 'block'
+        } else {
+          dom.style.display = 'none'
+        }
+        
+        if(need == 'update'){
+          // 更新 dataCollection.dataPre
+          var dataPre = this.dataCollection[this.curPage - 1].dataPre
+          dataPre.filter(item => item.type == '表单' ? item[val] = bool : '')
+        }
+      }
     },
     // 打开选择背景图片的弹出层
     imgPopupToggle: function() {
@@ -410,6 +461,13 @@ export default {
       }
       this.tempData.selBg.imgSrc = img;
       console.log(this.tempData.selBg.imgSrc);
+    },
+    // 设置浏览器右键不触发
+    rclick(){
+      if (event.button == 2){
+        event.returnvalue = false;
+        console.log('设置浏览器右键不触发')
+      }
     },
     setShadow: function() {
       if (this.defaultStyle.shadowWidth == 0) {

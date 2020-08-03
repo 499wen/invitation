@@ -202,7 +202,7 @@
 .formTemplate{
     width: 90%;
     height: 50%;
-    position: relative;
+    position: absolute;
     margin: auto;
 }
 

@@ -26,7 +26,15 @@ export function eachPageData(_this) {
 			width: 375,
 			height: 649,
 			img: '../assets/temp-01.jpg'
-		}
+		},
+		formAttr: {
+			'enable': true, // 使用表单标记
+			'sex': true, // 性别
+			'company': true, // 单位
+			'department': true, // 部门
+			'post': true, // 职务
+			'email': true // 电子邮件
+		},
 	}
 }
 
@@ -135,6 +143,18 @@ export function drop(event, _this) {
 		// 元素样式配置
 		_this.isImage = true
 	}
+
+	// 给元素添加  右键事件
+	let elem = $(node).find('.invite-text-box')[0]
+	elem.oncontextmenu = rightCilik
+
+	// 给右键列表添加 移出事件
+	let rightC_list = $(elem).find('.rightC-list')[0]
+	rightC_list.onmouseout = rightList
+
+	// 给右键列表增加点击事件
+	let delDom = $(rightC_list).find('.del')[0]
+	delDom.onclick = delEle
 
 	// 保存类型
 	defaultStyle.type = data
@@ -355,17 +375,42 @@ function renderingDom(elType, obj){
 	}
 }
 
-export function addSubmitForm(_this) {
+let formData = {
+	'el-x': 10,
+	'el-y': 50,
+	'width': '80%',
+	'height': '320',
 
-	if (!_this.needForm) {
-		//不需要表单
-		let forms = $('#mc').find('.formTemplate');	
-		for (let i = 0; i < forms.length; i++) {
-			$(forms[i]).remove()
-		}
+	formAttr: {
+		'enable': true, // 使用表单标记
+		'sex': true, // 性别
+		'company': true, // 单位
+		'department': true, // 部门
+		'post': true, // 职务
+		'email': true // 电子邮件
+	},
+	'type': 'form'
+}
+
+export function addSubmitForm(_this) {
+	// 每页只能存在一个表单
+	var eleList = _this.dataCollection[_this.curPage - 1].eleList
+	var is_form = eleList.map(item => item.nodeValue == '表单' && true).filter(item => item)[0]
+
+	console.log(is_form)
+	if (is_form) {
+		console.log('已存在表单')
+		// //不需要表单
+		// let forms = $('#mc').find('.formTemplate');	
+		// for (let i = 0; i < forms.length; i++) {
+		// 	$(forms[i]).remove()
+		// }
 
 		return
 	}
+	
+	// 获取 vue 对象
+	vue = _this
 
 	//需要添加表单，先判断是否己经有表单了，如果有了，按配置变更显示项，否则先添加一下，再按配置变更显示项
 	let forms = $('#mc').find('.formTemplate');
@@ -376,35 +421,53 @@ export function addSubmitForm(_this) {
 	}
 	// 没有存在表单，就要先添加一个
 	let node = document.getElementById('formTemplate').cloneNode(true)
+
+	// 给元素添加  右键事件
+	let elem = $(node).find('.invite-text-box')[0]
+	elem.oncontextmenu = rightCilik
+
+	// 给右键列表添加 移出事件
+	let rightC_list = $(elem).find('.rightC-list')[0]
+	rightC_list.onmouseout = rightList
+
+	// 给右键列表增加点击事件
+	let delDom = $(rightC_list).find('.del')[0]
+	delDom.onclick = delEle
+
 	node.id = uuid()
 	$(node).css('display', 'block')
 	$($('#mc').find('.phone-item')[_this.showKey]).append(node);
-	$(node).css('transform', "translate(10px,50px)")
-	initNode(node)
-	_this.updateSubmitForm(node)
 
-} //addSubmitForm
+	/**
+	 * 渲染表单dom 
+	 * 
+	 */
+	$(node).css({
+		'transform': `translate(${formData['el-x']}px,${formData['el-y']}px)`,
+		'width': `${formData.width}`,
+		'height': `${formData.height}px`,
+	})
 
-// text = 元素列显示的文字
-export function initNode(node, _this,text) {
-		if(text !== undefined){
-			 var idObject = {};
-			 idObject.id = $(node).attr('id');
-			 idObject.nodeValue=text;
-			 _this.idList.push(idObject)
-			 idMap.set(node.id,_this.showKey)
-			 
-		}
-	
+	// 覆盖 dataCollection.formAttr
+	var formAttr = _this.dataCollection[_this.curPage - 1].formAttr
+	formData.formAttr = formAttr
 
-	nodes.set($(node).attr('id'), node)
-	
+	// 将表单添进 dataCollection.dataPre
+	var dataPre = _this.dataCollection[_this.curPage - 1].dataPre
+	dataPre.push({key: node.id, value: formData})
+
+	// 将表单记录添进 dataCollection.eleList
+	eleList.push({id: node.id, nodeValue: '表单'})
+
+	console.log(dataPre, eleList)
+	// initNode(node, _this)
+// return 
 	$(node).click(function(e) {
 		e.stopPropagation()
 		e.preventDefault()
 		hideBox()
 		$(this).find('.invite-text-box-border').css('display', 'block')
-		_this.initTemplateCss(this)
+		// _this.initTemplateCss(this)
 		
 		if(_this.activeName.length === 0){
 			_this.activeName.push("1")
@@ -432,9 +495,85 @@ export function initNode(node, _this,text) {
 		moveMethod = 'move';
 		let trans = $(this).css('transform')
 		let s = trans.split(',');
-		nodeWidth = $(this).css('width').replace('px', '') - 0;
-		nodeHeight = $(this).css('height').replace('px', '') - 0
-		console.log(nodeWidth, nodeHeight, s)
+		// nodeWidth = $(this).css('width').replace('px', '') - 0;
+		// nodeHeight = $(this).css('height').replace('px', '') - 0
+		// console.log(nodeWidth, nodeHeight, s)
+		nodeX = s[4] - 0
+		nodeY = s[5].substr(0, s[5].length - 1) - 0
+		console.log($(e.target).hasClass('top-line-point'))
+		if ($(e.target).hasClass('top-line-point')) {
+			moveMethod = 'topResize'
+		} else if ($(e.target).hasClass('left-line-point')) {
+			moveMethod = 'leftResize'
+		} else if ($(e.target).hasClass('right-line-point')) {
+			moveMethod = 'rightResize'
+		} else if ($(e.target).hasClass('bottom-line-point')) {
+			moveMethod = 'bottomResize'
+		} else if ($(e.target).hasClass('left-top-point')) {
+			moveMethod = 'leftTopResize'
+		} else if ($(e.target).hasClass('right-top-point')) {
+			moveMethod = 'rightTopResize'
+		} else if ($(e.target).hasClass('left-bottom-point')) {
+			moveMethod = 'leftBottomResize'
+		} else if ($(e.target).hasClass('right-bottom-point')) {
+			moveMethod = 'rightBottomResize'
+		}
+
+	});
+
+	_this.updateSubmitForm(node)
+
+} //addSubmitForm
+
+// text = 元素列显示的文字
+export function initNode(node, _this,text) {
+		if(text !== undefined){
+			 var idObject = {};
+			 idObject.id = $(node).attr('id');
+			 idObject.nodeValue = text;
+			 _this.idList.push(idObject)
+			 idMap.set(node.id,_this.showKey)
+		}
+	
+
+	nodes.set($(node).attr('id'), node)
+	
+	$(node).click(function(e) {
+		e.stopPropagation()
+		e.preventDefault()
+		hideBox()
+		$(this).find('.invite-text-box-border').css('display', 'block')
+		// _this.initTemplateCss(this)
+		
+		if(_this.activeName.length === 0){
+			_this.activeName.push("1")
+			 _this.activeName.push("2")
+			 _this.activeName.push("3")
+			}
+			
+	})
+	$(node).mousedown(function(e) {
+		$(".check").removeClass("check")
+		 $("#" +'itemId'+ node.id).addClass("check");
+		
+		// var nodeElement = $("#"+ node.id);
+		// console.log("zzzz",nodeElement.css('color'))
+		// 鼠标按下时，初始化当前控件的各项属性
+		if ($(e.target).hasClass('edit-text')) {
+			// moveMethod='topResize'
+			return
+		}
+		console.log("mouseIsDown = " + mouseIsDown)
+		mouseIsDown = true;
+		currentNode = this;
+		mouseX = e.pageX;
+		mouseY = e.pageY;
+		moveMethod = 'move';
+		let trans = $(this).css('transform')
+		let s = trans.split(',');
+		// nodeWidth = $(this).css('width').replace('px', '') - 0;
+		// nodeHeight = $(this).css('height').replace('px', '') - 0
+		// console.log(nodeWidth, nodeHeight, s)
 		nodeX = s[4] - 0
 		nodeY = s[5].substr(0, s[5].length - 1) - 0
 		console.log($(e.target).hasClass('top-line-point'))
@@ -478,7 +617,6 @@ export function reduction(_this){
 	let node
 	vue = _this
 
-	console.log(_this.curPage)
 	for(let item of dataCollection[curPage - 1].dataPre){
 		var data = item.value.type
 		
@@ -495,6 +633,12 @@ export function reduction(_this){
 			defaultStyle = item.value
 			// 元素样式配置
 			_this.isImage = true
+		} else if(data == 'form') {
+			node = document.getElementById('formTemplate').cloneNode(true);
+			// 将元素 默认数据 统一保存在defaultStyle 对象中
+			defaultStyle = item.value
+			// 元素样式配置
+			_this.isImage = false
 		}
 
 		node.id = item.key
@@ -503,13 +647,46 @@ export function reduction(_this){
 		// 元素数据赋值给 vue.defaultStyle
 		_this.defaultStyle = defaultStyle
 
-		// 渲染dom
-		renderingDom(data, defaultStyle)
+
 		
 		// 元素附加拖动效果
 		dropEffect(node, _this)
 
+		// 给元素添加  右键事件
+		let elem = $(node).find('.invite-text-box')[0]
+		elem.oncontextmenu = rightCilik
+
+		// 给右键列表添加 移出事件
+		let rightC_list = $(elem).find('.rightC-list')[0]
+		rightC_list.onmouseout = rightList
+
+		// 给右键列表增加点击事件
+		let delDom = $(rightC_list).find('.del')[0]
+		delDom.onclick = delEle
+
 		document.querySelector('.phone-item').appendChild(node)
+
+		// 渲染dom 表单不适合
+		if(data != 'form'){
+			renderingDom(data, defaultStyle)
+		} else {
+			/**
+			 * 渲染表单dom 
+			 * 
+			 */
+			$(node).css({
+				'transform': `translate(${defaultStyle['el-x']}px,${defaultStyle['el-y']}px)`,
+				'width': `${defaultStyle.width}`,
+				'height': `${defaultStyle.height}px`,
+				'display': 'block'
+			})
+			console.log(defaultStyle.formAttr)
+			for(let i in defaultStyle.formAttr){
+				if(i != 'enable')
+				_this.initForm(i, 'no-update')
+			}
+
+		}
 
 		// 去除选中标识
 		$('.invite-text-box-border').css('display', 'none')
@@ -549,8 +726,6 @@ function dropEffect(node, _this){
 			 _this.activeName.push("3")
 		}
 
-		// 查看tNode
-		console.log()
 	})
 	$(node).mousedown(function(e) {
 
@@ -572,6 +747,7 @@ function dropEffect(node, _this){
 		moveMethod = 'move';
 		let trans = $(this).css('transform')
 		let s = trans.split(',');
+		console.log(s)
 		nodeWidth = $(this).css('width').replace('px', '') - 0;
 		nodeHeight = $(this).css('height').replace('px', '') - 0
 		console.log(nodeWidth, nodeHeight, s)
@@ -597,6 +773,74 @@ function dropEffect(node, _this){
 		}
 
 	});
+}
+
+// 给元素添加右键事件
+let rightCilik = function (e) {
+	// 去除其它元素 选中样式
+	$('.invite-text-box-border').css('display', 'none')
+	
+	// 增加选中样式
+	$(this).find('.invite-text-box-border').css('display', 'block')
+
+	// 获取元素 数据
+	var id = this.parentNode.id
+	var dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+	var style = dataPre.filter( item => id == item.key && item)[0].value
+
+	// 获取当前元素 相对模板坐标
+	var p_x = e.layerX - +style['el-x']
+	var p_y = e.layerY - +style['el-y']
+
+	console.log(p_x, p_y)
+	// 显示右键列表
+	$(this).find('.rightC-list')[0].style = `
+		display: flex;
+		top: ${p_y}px;
+		left: ${p_x}px;
+	`
+}
+
+// 给右键列表添加移出事件
+let rightList = function (e) {
+	if(!e.toElement.classList.contains('currency')){
+		// 隐藏右键列表
+		this.style.display = 'none'
+	}
+}
+
+// 获取 删除元素
+function delEle(e){
+	console.log('删除元素')
+	// 删除 vue.dataCollection.dataPre, eleList 数据
+	let delDom = e.path[3]
+	let id = delDom.id
+
+	let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+	let eleList = vue.dataCollection[vue.curPage - 1].eleList
+
+	for(let i = 0; i < dataPre.length; i++){
+		if(dataPre[i].key == id){
+			dataPre.splice(i, 1)
+			break
+		}
+	}
+
+	for(let i = 0; i < eleList.length; i++){
+		if(eleList[i].id == id){
+			eleList.splice(i, 1)
+			break
+		}
+	}
+
+	// 删除 dom
+	document.querySelector('.phone-item').removeChild(e.path[3])
+
+	setTimeout(() => {
+		// 重置数据
+		vue.tNode = null
+		vue.defaultStyle = {}
+	}, 100)
 }
 
 export function hideBox(showStyle) {
@@ -634,6 +878,11 @@ document.body.onmousemove = function(event) {
 
 	let moveX = event.pageX - mouseX;
 	let moveY = event.pageY - mouseY;
+
+	// 鼠标放在右键列表时 不执行
+	if(event.path[0].classList.contains('currency')){
+		return 
+	}
 	// console.log("move = " +moveX,moveY,(nodeX+moveX),(nodeY+moveY))
 	if (moveMethod == 'move') {
 		console.log("move")
@@ -648,6 +897,8 @@ document.body.onmousemove = function(event) {
 		leftResize(moveX, moveY)
 	} else if (moveMethod == 'rightResize') {
 		rightResize(moveX, moveY)
+	}else if (moveMethod == 'rightBottomResize') {
+		rightBottomResize(moveX, moveY)
 	}
 }
 
@@ -671,6 +922,9 @@ function topResize(moveX, moveY) {
 	}
 	$(currentNode).css('height', (nodeHeight - moveY) + 'px')
 	$(currentNode).css('transform', 'translate(' + (nodeX) + 'px,' + (nodeY + moveY) + 'px)');
+
+	console.log(nodeHeight - moveY)
+	vue.defaultStyle.height = (nodeHeight - moveY) + 'px'
 }
 
 function bottomResize(moveX, moveY) {
@@ -679,6 +933,7 @@ function bottomResize(moveX, moveY) {
 	}
 	$(currentNode).css('height', (nodeHeight + moveY) + 'px')
 	// $(currentNode).css('transform','translate('+(nodeX)+'px,'+(nodeY+moveY)+'px)');
+	vue.defaultStyle.height = (nodeHeight + moveY) + 'px'
 }
 
 function leftResize(moveX, moveY) {
@@ -688,6 +943,9 @@ function leftResize(moveX, moveY) {
 	console.log('移动', moveX, moveY)
 	$(currentNode).css('width', (nodeWidth - moveX) / 375 * 101.5 + '%')
 	$(currentNode).css('transform', 'translate(' + (nodeX + moveX) + 'px,' + (nodeY) + 'px)');
+
+	vue.defaultStyle.width = ((nodeWidth - moveX) / 375 * 101.5) / 100 * 375 + 'px'
+	// console.log((nodeWidth - moveX) / 375 * 101.5)
 }
 
 function rightResize(moveX, moveY) {
@@ -696,7 +954,22 @@ function rightResize(moveX, moveY) {
 	}
 	$(currentNode).css('width', (nodeWidth + moveX) / 375 * 101.5 + '%')
 	// $(currentNode).css('transform','translate('+(nodeX+moveX)+'px,'+(nodeY)+'px)');
+	vue.defaultStyle.width = ((nodeWidth + moveX) / 375 * 101.5) / 100 * 375 + 'px'
 }
+
+function rightBottomResize(moveX, moveY) {
+	if (nodeWidth + moveX <= 20 || nodeHeight + moveY <= 20) {
+		return 
+	}
+
+	$(currentNode).css('height', (nodeHeight + moveY) + 'px')
+	$(currentNode).css('width', (nodeWidth + moveX) / 375 * 101.5 + '%')
+	// $(currentNode).css('transform','translate('+(nodeX+moveX)+'px,'+(nodeY)+'px)');
+
+	vue.defaultStyle.width = ((nodeWidth + moveX) / 375 * 101.5) / 100 * 375 + 'px'
+	vue.defaultStyle.height = (nodeHeight + moveY) + 'px'
+}
+
 
 export {
 	nodes,

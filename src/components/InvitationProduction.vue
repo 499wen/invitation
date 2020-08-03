@@ -28,7 +28,7 @@
 				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ tempData.selBg.imgSrc +');'" v-if="isLongPage">
 					<div id="mc">
 						<div id="phonecontent">
-							<div class="phone-item" :style="'height:'+ dataCollection[curPage - 1].model.height +'px;'" @drop="dropTest($event)"
+							<div class="phone-item" id="phone-item" :style="'height:'+ dataCollection[curPage - 1].model.height +'px;'" @drop="dropTest($event)"
 							  @dragover="allowDrop($event)">
 							</div>
 						</div>
@@ -85,7 +85,7 @@
 			</div>
 
 			<!--  -->
-			<div id="templateStyle" v-if="tNode">
+			<div id="templateStyle" v-if="tNode && defaultStyle.type != '表单'">
 				<el-collapse v-model="activeName">
 					<el-collapse-item title="基本样式" name="1" style="padding-right: 15px;">
 						<div class="layui-colla-content layui-show">
@@ -378,6 +378,12 @@
 			<div v-show="false" id="textTemplate" class="textTemplate" style="height:40px;width:60%">
 				<div class="invite-text-box">
 					<div class="invite-text-box-text edit-text" contenteditable="true">点击这里编辑</div>
+
+					<!-- 右键列表 -->
+					<div class="rightC-list currency" id="">
+						<span class="del currency">删除</span>
+					</div>
+
 					<div class="invite-text-box-border">
 						<div class="invite-text-box-border-container">
 							<div class="invite-text-box-border top-line move-line">
@@ -406,11 +412,17 @@
 			</div>
 		</div>
 		<!-- 这里是文字的模板 end?-->
+		<!--  这里是图片的模板 start-->
 		<div v-show="false" id="imageTemplate" class="imageTemplate" style="height:150px;width:150px">
 			<div class="invite-text-box">
 				<div class="invite-text-box-text">
 					<div class="tip">请上传图片</div>
 				</div>
+				<!-- 右键列表 -->
+				<div class="rightC-list currency">
+					<span class="currency del">删除</span>
+				</div>
+
 				<div class="invite-text-box-border">
 					<div class="invite-text-box-border-container">
 						<div class="invite-text-box-border top-line move-line">
@@ -450,7 +462,7 @@
 						<span class="two-text white">性别：</span>
 						<input class="inp-style" type="text" />
 					</div>
-					<div class="workplace mb10">
+					<div class="company mb10">
 						<span class="two-text white">单位：</span>
 						<input class="inp-style" type="text" />
 					</div>
@@ -458,7 +470,7 @@
 						<span class="two-text white">部门：</span>
 						<input class="inp-style" type="text" />
 					</div>
-					<div class="duties mb10">
+					<div class="post mb10">
 						<span class="two-text white">职务：</span>
 						<input class="inp-style" type="text" />
 					</div>
@@ -481,6 +493,12 @@
 						<button class="invite-submission">提 交</button>
 					</div>
 				</div>
+
+				<!-- 右键列表 -->
+				<div class="rightC-list currency">
+					<span class="currency del">删除</span>
+				</div>
+
 				<div class="invite-text-box-border">
 					<div class="invite-text-box-border-container">
 						<div class="invite-text-box-border top-line move-line">
@@ -567,33 +585,33 @@
 			<div class="form_table">
 				<div class="form_switch">
 					<div class="form_label">启用表单：</div>
-					<el-switch v-model="needForm" :width="40" @change="initForm">
+					<el-switch v-model="dataCollection[curPage - 1].formAttr.enable" :width="40" @change="initForm()">
 					</el-switch>
 				</div>
-				<div v-show="needForm">
+				<div v-show="dataCollection[curPage - 1].formAttr.enable">
 					<div class="form_item">
 						<div class="form_label">性别：</div>
-						<el-switch v-model="formConfig.sex" :width="40" @change="initForm">
+						<el-switch v-model="dataCollection[curPage - 1].formAttr.sex" :width="40" @change="initForm('sex')">
 						</el-switch>
 					</div>
 					<div class="form_item">
 						<div class="form_label">单位：</div>
-						<el-switch v-model="formConfig.workplace" :width="40" @change="initForm">
+						<el-switch v-model="dataCollection[curPage - 1].formAttr.company" :width="40" @change="initForm('company')">
 						</el-switch>
 					</div>
 					<div class="form_item">
 						<div class="form_label">部门：</div>
-						<el-switch v-model="formConfig.department" :width="40" @change="initForm">
+						<el-switch v-model="dataCollection[curPage - 1].formAttr.department" :width="40" @change="initForm('department')">
 						</el-switch>
 					</div>
 					<div class="form_item">
 						<div class="form_label">职务：</div>
-						<el-switch v-model="formConfig.duties" :width="40" @change="initForm">
+						<el-switch v-model="dataCollection[curPage - 1].formAttr.post" :width="40" @change="initForm('post')">
 						</el-switch>
 					</div>
 					<div class="form_item">
 						<div class="form_label">电子邮件：</div>
-						<el-switch v-model="formConfig.email" :width="40" @change="initForm">
+						<el-switch v-model="dataCollection[curPage - 1].formAttr.email" :width="40" @change="initForm('email')">
 						</el-switch>
 					</div>
 				</div>
@@ -634,6 +652,31 @@
 				text-align: right;
 				width: 40px;
 			}
+		}
+	}
+
+	.invite-text-box {
+		position: relative;	
+	}
+	
+	// 右键列表
+	.invite-text-box .rightC-list {
+		background-color: #fff;
+		padding: 5px 10px;
+		z-index: 20;
+		box-sizing: border-box;
+		flex-wrap: wrap;
+		position: absolute;
+		cursor: pointer !important;
+		display: none;
+
+		& > span {
+			width: 100%;
+			margin-bottom: 5px;
+		}
+
+		& > span:nth-last-child(1) {
+			margin-bottom: 0;
 		}
 	}
 
@@ -1051,7 +1094,7 @@
 		}
 
 		.phone-item {
-			width: 369px;
+			width: 100%;
 			height: 630px;
 			position: absolute;
 			top: 0px;
