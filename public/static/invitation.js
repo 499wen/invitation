@@ -66,6 +66,8 @@ var textStyle = {
 	"fontWeight": false, // 字体粗细
 	"textDecoration": false, // 文本下划线
 	"fontStyle": false, // 文本斜体
+
+	'cte': ''
 }
 
 // 图片
@@ -135,6 +137,9 @@ export function drop(event, _this) {
 		
 		// 元素样式配置
 		_this.isImage = false
+
+		// 给文本元素增加 oninput 事件
+		node.oninput = getText
 	} else if (data == 'image') {
 		nodeValue = "图片";
 		node = document.getElementById('imageTemplate').cloneNode(true);
@@ -216,7 +221,7 @@ export function drop(event, _this) {
 			item.eleList.push({ id: node.id, nodeValue })
 		}
 	})
-	// // 插入新的 映射对象
+	// // 插入新的 映射对象 
 	// _this.dataCollection[_this.curPage - 1].
 	// // 插入新的 元素列
 	// _this.dataCollection[_this.curPage - 1].
@@ -333,14 +338,14 @@ export function drop(event, _this) {
 function renderingDom(elType, obj){
 	// 当前dom
 	let tNode = vue.tNode
-	console.log(tNode, obj)
+	// console.log(tNode, obj)
 
-	// 给tNode 编写css属性 
+	// 给tNode 编写css属性 公共属性
 	tNode.style = `
 		opacity: ${obj.opacity / 100};
 		border-color: ${obj.borderColor};
 		border-style: ${obj.borderStyle};
-		border-width: ${obj.borderWidth}px';
+		border-width: ${obj.borderWidth}px;
 		border-radius: ${obj.borderRadius}px;
 		z-index: ${obj['z-index']};
 		box-shadow: ${obj.shadowWidth}px ${obj.shadowDirectionV}px ${obj.shadowDirectionH}px ${obj.shadowDim}px ${obj.shadowColor};
@@ -610,7 +615,6 @@ function uuid() {
 // 还原元素
 export function reduction(_this){
 
-	console.log('reduction')
 	// 创建dom
 	let dataCollection = _this.dataCollection
 	let curPage = _this.curPage
@@ -627,12 +631,16 @@ export function reduction(_this){
 			
 			// 元素样式配置
 			_this.isImage = false
+
+			// 给文本元素增加 oninput 事件
+			node.oninput = getText
 		} else if (data == 'image') {
 			node = document.getElementById('imageTemplate').cloneNode(true);
 			// 将元素 默认数据 统一保存在defaultStyle 对象中
 			defaultStyle = item.value
 			// 元素样式配置
 			_this.isImage = true
+
 		} else if(data == 'form') {
 			node = document.getElementById('formTemplate').cloneNode(true);
 			// 将元素 默认数据 统一保存在defaultStyle 对象中
@@ -647,12 +655,10 @@ export function reduction(_this){
 		// 元素数据赋值给 vue.defaultStyle
 		_this.defaultStyle = defaultStyle
 
-
-		
 		// 元素附加拖动效果
 		dropEffect(node, _this)
 
-		// 给元素添加  右键事件
+		// 给元素添加 右键事件
 		let elem = $(node).find('.invite-text-box')[0]
 		elem.oncontextmenu = rightCilik
 
@@ -666,9 +672,19 @@ export function reduction(_this){
 
 		document.querySelector('.phone-item').appendChild(node)
 
-		// 渲染dom 表单不适合
-		if(data != 'form'){
+		// 渲染dom 表单不适合 
+		if(data == 'invite-text'){
 			renderingDom(data, defaultStyle)
+
+			// 获取文本内容
+			$(node).find('.invite-text-box-text')[0].innerText = defaultStyle.cte || '点击这里编辑'
+		} else if(data == 'image'){
+			renderingDom(data, defaultStyle)
+
+			node.style.backgroundImage = `url(${defaultStyle.url})`
+			// 获取文本内容
+			// console.log($(node).find('.invite-text-box'))
+			$(node).find('.invite-text-box-text')[0].innerText = defaultStyle.url ? ' ' :  '请上传图片1'
 		} else {
 			/**
 			 * 渲染表单dom 
@@ -841,6 +857,17 @@ function delEle(e){
 		vue.tNode = null
 		vue.defaultStyle = {}
 	}, 100)
+}
+
+// 获取文本输入内容
+function getText(e){
+	// var dataPre = 
+	// _this.cte = e.innerText
+	console.log(this.id)
+	var id = this.id
+
+	let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+	dataPre.filter( item => item.key == id ? item.value.cte = this.innerText : '')
 }
 
 export function hideBox(showStyle) {

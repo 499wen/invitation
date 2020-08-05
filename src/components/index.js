@@ -68,8 +68,8 @@ export default {
       activeName: [],
       location: window.location.host,
       headers: {
-        Authorization: token,
-        token: token
+        Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI',
+        token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI'
       },
       popupVisible: false, //控制选择背景图弹出层的隐藏与显示
       isLongPage: true, //是否为长页模式
@@ -174,26 +174,52 @@ export default {
         return true
       }
     }
-  //  return
-    // 模拟数据
-    var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
-                          [{
-                              page: 1,
-                              dataPre: [],
-                              eleList: [],
-                              model: {
-                                height: 649,
-                                width: 375,
-                                img: '../assets/temp-01.jpg'
-                              }
-                          }]
-    
-    // 数据初始化
-    this.dataCollection = dataCollection
-    this.curPage = 1
 
-    // 还原元素
-    reduction(this)
+
+    if(false){
+
+              // 模拟数据
+              var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
+              [{
+                  page: 1,
+                  dataPre: [],
+                  eleList: [],
+                  model: {
+                    height: 649,
+                    width: 375,
+                    img: '../assets/temp-01.jpg'
+                  },
+                  formAttr: {
+                    'enable': true, // 使用表单标记
+                    'sex': true, // 性别
+                    'company': true, // 单位
+                    'department': true, // 部门
+                    'post': true, // 职务
+                    'email': true // 电子邮件
+                  },
+              }]
+      
+      // 数据初始化
+      this.dataCollection = dataCollection 
+      this.curPage = 1
+      
+      // 还原元素
+      reduction(this)
+    }
+// return 
+    this.$http
+    .get(
+      `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/4028804373a3f9b50173a3fbbd1e0000`)
+    .then(res => {
+      console.log(res);
+      // 数据初始化
+      this.dataCollection = JSON.parse(JSON.parse(res.data[0].dataVal).meetingInvitation)
+      this.curPage = 1
+      // 还原元素
+      reduction(this)
+    });
+   return
+
   },
   watch: {
     // ["dataCollection[0].dataPre"]: function (val){
@@ -407,7 +433,7 @@ export default {
 
       }
     },
-    //  当鼠标松开
+    //  当鼠标松开 
     elongateUp: function(e) {},
     //  formConfig改变时刷新form表单
     initForm: function(val, need = 'update') {
@@ -415,7 +441,6 @@ export default {
       if(val){
         var dom = document.querySelector("." + val)
         var bool = this.dataCollection[this.curPage - 1].formAttr[val]
-        console.log(val, '=', bool)
         // var formParent = document.querySelector('.formTemplate .invite-text-box-text')
         if(bool){
           dom.style.display = 'block'
@@ -606,10 +631,12 @@ export default {
     uploadImage: function(res) {
       console.log(res);
       if (res.code == "000") {
-        let locationUrl = "/api/filecenter/file/file/" + res.data.id;
+        // let locationUrl = "/api/filecenter/file/file/" + res.data.id;
+
+        this.defaultStyle.url = "/api/filecenter/file/file/" + res.data.id;
 
         // $(this.tNode).find('.invite-text-box-text').css('background-image','url("'+res.src+'")')
-        $(this.tNode).css("background-image", 'url("' + locationUrl + '")');
+        $(this.tNode).css("background-image", 'url("' + this.defaultStyle.url + '")');
         $(this.tNode)
           .find(".tip")
           .css("display", "none");
@@ -625,38 +652,43 @@ export default {
       event.preventDefault();
     },
     save: function() {
-      $("#qrcode").empty(); //清除二维码
-          let mtId = this.meetId ? this.meetId : this.utils.getUrlParma("meetingId");
+      // $("#qrcode").empty(); //清除二维码
+      //     let mtId = this.meetId ? this.meetId : this.utils.getUrlParma("meetingId");
       let _this = this;
-      if (!mtId) {
-        return; 
-      }
+      // if (!mtId) {
+      //   return; 
+      // }
 
-      let params = [];
-      for (let i = 0; i < _this.tempData.list.length; i++) {
-        // let tmp= _this.tempData.list[i];
-        let htmlObj = $($("#mc").find(".phone-item")[i]);
-        htmlObj
-          .find(">div >div >.invite-text-box-border")
-          .css("display", "none");
-        let tmp = {
-          meetid: mtId,
-          pageHeight: _this.longPageHeightArray[i],
-          serial: i,
-          content: htmlObj.html(),
-          imgsrc: _this.tempData.selBg.imgSrc
-        };
-        params.push(tmp);
+      // _this.dataCollection.meetingId = '4028804373a3f9b50173a3fbbd1e0000'
+
+      let data = {
+        meetingInvitation: JSON.stringify(_this.dataCollection),
+        // meetingId: '4028804373a3f9b50173a3fbbd1e0000'
       }
-      console.log(params);
+      // for (let i = 0; i < _this.tempData.list.length; i++) {
+      //   // let tmp= _this.tempData.list[i];
+      //   let htmlObj = $($("#mc").find(".phone-item")[i]);
+      //   htmlObj
+      //     .find(">div >div >.invite-text-box-border")
+      //     .css("display", "none");
+      //   let tmp = {
+      //     meetid: mtId,
+      //     pageHeight: _this.longPageHeightArray[i],
+      //     serial: i,
+      //     content: htmlObj.html(),
+      //     imgsrc: _this.tempData.selBg.imgSrc
+      //   };
+      //   params.push(tmp);
+      // }
+      // console.log(meetingInvitation );
       this.$http
         .post(
-          `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/` +
-          mtId,
-          params
+          `/api/meetingcenter/meetingInvitation/meetingInvitation/4028804373a3f9b50173a3fbbd1e0000`,
+          data
         )
         .then(res => {
           console.log(res);
+
           if(res.code == "000"){
             _this.$message({
               type: "success",
@@ -668,7 +700,7 @@ export default {
               message: "保存失败，请重试"
             });
           }
-          _this.generateQrCode();
+          // _this.generateQrCode();
         });
     }, //save
 

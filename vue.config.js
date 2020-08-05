@@ -1,6 +1,6 @@
 module.exports = {
     lintOnSave: false,
-    publicPath: '/restaurant',
+    publicPath: '/invitation',
     devServer: {
       port: 8899,     // 端口
   },

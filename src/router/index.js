@@ -5,6 +5,7 @@ import VueRouter from 'vue-router'
  * 路由
  */ 
 import  InvitationProduction from '@/components/InvitationProduction.vue'
+import  test from '@/components/test.vue'
 
 
 /**
@@ -20,6 +21,12 @@ const routes = [
         path: '/InvitationProduction',
         name: '邀请函',
         component: InvitationProduction
+    },
+
+    {
+        path: '/test',
+        name: '邀请函',
+        component: test
     },
 
 
