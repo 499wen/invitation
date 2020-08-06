@@ -176,28 +176,28 @@ export default {
     }
 
 
-    if(false){
+    if(true){
 
-              // 模拟数据
-              var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
-              [{
-                  page: 1,
-                  dataPre: [],
-                  eleList: [],
-                  model: {
-                    height: 649,
-                    width: 375,
-                    img: '../assets/temp-01.jpg'
-                  },
-                  formAttr: {
-                    'enable': true, // 使用表单标记
-                    'sex': true, // 性别
-                    'company': true, // 单位
-                    'department': true, // 部门
-                    'post': true, // 职务
-                    'email': true // 电子邮件
-                  },
-              }]
+      // 模拟数据
+      var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
+      [{
+          page: 1,
+          dataPre: [],
+          eleList: [],
+          model: {
+            height: 649,
+            width: 375,
+            img: '../assets/temp-01.jpg'
+          },
+          formAttr: {
+            'enable': true, // 使用表单标记
+            'sex': true, // 性别
+            'company': true, // 单位
+            'department': true, // 部门
+            'post': true, // 职务
+            'email': true // 电子邮件
+          },
+      }]
       
       // 数据初始化
       this.dataCollection = dataCollection 
@@ -206,7 +206,7 @@ export default {
       // 还原元素
       reduction(this)
     }
-// return 
+return 
     this.$http
     .get(
       `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/4028804373a3f9b50173a3fbbd1e0000`)
@@ -375,10 +375,10 @@ export default {
         t = setInterval(() => {
           if(sign == 'down'){
             
-            this_.dataCollection[this_.curPage - 1].model.height += 1
+            this_.dataCollection[this_.curPage - 1].model.height += 5
           } else if(sign == 'up'){
             if(this_.dataCollection[this_.curPage - 1].model.height > 649){
-              this_.dataCollection[this_.curPage - 1].model.height -= 1
+              this_.dataCollection[this_.curPage - 1].model.height -= 5
             }
           }
         }, 1)
@@ -391,6 +391,15 @@ export default {
         $('.justify-center')[0].onmousemove = null
         $('.justify-center')[0].onmouseup = null
       }
+
+      // $('.justify-center')[0].onmouseout = function(e){
+      //   console.log(e)
+      //   if(t){
+      //     clearInterval(t)
+      //   }
+      //   $('.justify-center')[0].onmousemove = null
+      //   $('.justify-center')[0].onmouseout = null
+      // }
 
     },
     // 当鼠标在伸缩盒子上按下
@@ -681,6 +690,10 @@ export default {
       //   params.push(tmp);
       // }
       // console.log(meetingInvitation );
+
+      localStorage.setItem('dataCollection', data.meetingInvitation)
+
+      return 
       this.$http
         .post(
           `/api/meetingcenter/meetingInvitation/meetingInvitation/4028804373a3f9b50173a3fbbd1e0000`,

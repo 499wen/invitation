@@ -14,7 +14,7 @@
 				</li>
 			</ul> 
 			<div class="imgBtn" @click="addPage">
-				<div class="pImg"> 
+				<div class="pImg">  
 					<img src="./../assets/addpageBtn.png" alt />
 				</div>
 				<p>添加页面</p>
@@ -264,7 +264,7 @@
 					<el-collapse-item title="边框样式" name="2" style="padding-right: 15px;">
 						<div class="layui-colla-content single">
 							<div class="flex invite-progress">
-								<span class="mr15 style_label">尺寸</span>
+								<span class="mr15 style_label">宽度</span>
 								<div style="display: inline-block;width: 100px">
 									<!-- <el-slider v-model="defaultStyle.borderWidth" :max="20*1"></el-slider> -->
 									<el-input-number v-model="defaultStyle.borderWidth" size="mini" style="width:100px;" controls-position="right" :min="0" :max="20"></el-input-number>
@@ -484,7 +484,7 @@
 					</div>
 					<div class="checkNum mb10 flex">
 						<ul class="align-center mb10" style="width: 62%;padding:0;margin-top:0;">
-							<span class="three-text white">验 证 码 ：</span>
+							<span class="three-text white">验证码 ：</span>
 							<input class="inp-style1" type="text" />
 						</ul>
 						<button class="dain-code">获取验证码</button>
@@ -899,6 +899,8 @@
 			position: relative;
 			background-size: 100% auto;
 			margin: 20px auto 0px auto;
+			background-repeat: no-repeat;
+			border: 1px dashed #ccc;
 		}
 
 		.phone-m {
@@ -926,7 +928,7 @@
 			left: 0;
 			bottom: 0;
 			right: 0;
-			z-index: 2;
+			z-index: 20;
 
 			.white_box {
 				background-color: #fff;
@@ -935,7 +937,7 @@
 				position: absolute;
 				top: 50%;
 				left: 50%;
-				transform: translate(-50%, -50%);
+				transform: translate(10%, -50%);
 				border-radius: 20px;
 
 				.popup_titile {
@@ -1079,9 +1081,9 @@
 		}
 
 		.white {
-			display: inline-block;
-			width: 60px;
-			font-size: 12px;
+			// display: inline-block;
+			width: 70px;
+			font-size: 14px;
 			text-align-last: justify;
 			text-align: justify;
 			text-justify: distribute-all-lines; // 这行必加，兼容ie浏览器
@@ -1089,7 +1091,7 @@
 		}
 
 		.three-text {
-			width: 60px;
+			width: 70px;
 			margin-left: 7px;
 		}
 
