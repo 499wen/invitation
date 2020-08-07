@@ -13,17 +13,22 @@
 					<!-- <p class="el-icon-close closeImg" v-if="index != 0" @click.stop="tempData.list.splice(index, 1),showKey = 0"></p> -->
 				</li>
 			</ul> 
-			<div class="imgBtn" @click="addPage">
-				<div class="pImg">  
+			<div class="imgBtn">
+				<div class="pImg" @click="addPage">  
 					<img src="./../assets/addpageBtn.png" alt />
 				</div>
-				<p>添加页面</p>
+				<p @click="addPage">添加页面</p>
+				<p @click="presModel">保存模板</p>
 			</div>
 		</div>
 
 		<!-- 手机模板 -->
 		<div class="iContent flex">
 			<div class="content-middle ml15 justify-center" style="padding-right: 15px;width:100%;">
+				<div class="content-middle-type" v-if="false">
+					<div class="pattern select" @click="pattern($event, 'multiPage')">多页模式</div>
+					<div class="pattern" @click="pattern($event, 'longPage')">长页模式</div>
+				</div>
 				<!-- 长页邀请函 -->
 				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ tempData.selBg.imgSrc +');'" v-if="isLongPage">
 					<div id="mc">
@@ -75,9 +80,13 @@
 						<img class="invittext" src="../../public/static/images/invitbg.png" title="点击打开背景样式" />
 						<li>背景</li>
 					</ul>
-					<button class="btn_save invit-save" type="button" id="upEdit" data-loading-text="正在提交，请稍后..." @click="save">保存并提交</button>
+					<ul class="pl20 verson" @click="popupModel = true">
+						<img class="invittext" src="../../public/static/images/invitbg.png" title="点击打开背景样式" />
+						<li>模板</li>
+					</ul>
+					<el-button size="small" style="height: 30px;margin-left: 25px" @click="save">提交</el-button>
 				</div>
-				<!-- 	<div class="po-r inp-control mt15 mr15 ml10">
+				<!-- 	<div class="po-r inp-control mt15 mr15 ml10">class="btn_save invit-save" type="button" id="upEdit" data-loading-text="正在提交，请稍后..."
 					<button class="btn btn-warning invit-save" type="button" id="upEdit" data-loading-text="正在提交，请稍后..." @click="save">保存并提交
 					</button>
 					<span class="red ml10 font-14">* 设置完成后界面必须提交保存才能生效</span>
@@ -85,7 +94,7 @@
 			</div>
 
 			<!--  -->
-			<div id="templateStyle" v-if="tNode && defaultStyle.type != '表单'">
+			<div id="templateStyle" v-if="tNode && defaultStyle.type != 'form'">
 				<el-collapse v-model="activeName">
 					<el-collapse-item title="基本样式" name="1" style="padding-right: 15px;">
 						<div class="layui-colla-content layui-show">
@@ -575,11 +584,66 @@
 							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(10)">
 						</div>
 					</div>
+					<div class="popup_item">
+						<img src="../../public/static/images/temp-06.jpg" alt="">
+						<div>
+							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(6)">
+						</div>
+					</div>
+					<div class="popup_item">
+						<img src="../../public/static/images/temp-010.png" alt="">
+						<div>
+							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(10)">
+						</div>
+					</div>
 				</div>
-				<div class="popup_btn" @click="imgPopupToggle">确定</div>
+
+				<div class="popup_bottom">
+					<el-upload
+						class="upload-demo"
+						action="https://jsonplaceholder.typicode.com/posts/"
+						:on-success='bgiUpload'>
+						<el-button size="small" type="primary">点击上传</el-button>
+					</el-upload>
+
+					<el-button size="small" type="primary" @click="imgPopupToggle">确定</el-button>
+				</div>
 			</div>
 		</div>
 		<!-- 背景弹出层end -->
+
+		<!-- 选择模板时的弹出层 -->
+		<div class="popup_bg" v-show="popupModel">
+			<div class="white_box">
+				<div class="popup_titile">
+					选择背景图
+				</div>
+				<div class="popup_cente">
+
+					<div class="popup_item" v-for="(item, idx) in invitaModel" :key="idx">
+						<img :src="item.imgId" alt="">
+						<div>
+							<input type="radio" name="bgImgRadio" id="" @click="changeBgModel(idx)">
+						</div>
+					</div>
+
+				</div>
+
+				<div class="popup_bottom">
+					<!-- <el-upload
+						class="upload-demo"
+						action="https://jsonplaceholder.typicode.com/posts/"
+						:on-success='bgiUpload'>
+						<el-button size="small" type="primary">点击上传</el-button>
+					</el-upload> -->
+
+					<el-button size="small" type="primary" @click="modelBtn">选择</el-button>
+					<el-button size="small" type="danger" @click="delModel">删除</el-button>
+				</div>
+			</div>
+		</div>
+		<!-- 模板弹出层end -->
+
 		<!-- 表单弹窗start -->
 		<div class="form_bg" v-show="formConfigVisible">
 			<div class="form_table">
@@ -633,6 +697,51 @@
 	@import "../../public/static/text.css";
 </style>
 <style lang="less">
+	.content-middle {
+		display: flex;
+		flex-wrap: wrap;
+		align-content: flex-start;
+		padding-top: 50px;
+		box-sizing: border-box;
+
+		.content-middle-type {
+			width: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-size: 14px;
+
+			.pattern {
+				cursor: pointer;
+				width: 68px;
+				height: 26px;
+				text-align: center;
+				line-height: 26px;
+				box-sizing: border-box;
+				border: 1px solid #d9d9d9;
+				font-size: 12px;
+				z-index: 3;
+				position: relative;
+			}
+
+			.pattern:nth-child(1) {
+				border-radius: 5px 0 0 5px;
+				left: .5px;
+			}
+
+			.pattern:nth-child(2) {
+				right: .5px;
+				border-radius: 0 5px 5px 0;
+			}
+
+			.select {
+				z-index: 5;
+				color: #1890ff;
+				border-color: #1890ff;
+			}
+		}
+	}
+	// 
 	.el-select-dropdown__item {
 		text-align: center !important;
 	}
@@ -761,10 +870,14 @@
 		height: 120px;
 		margin: 0 auto;
 	}
-
 	.flex {
 		display: flex;
-		
+	}
+
+	.invite-head .flex {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
 	}
 
 	.invitation {
@@ -939,24 +1052,44 @@
 				left: 50%;
 				transform: translate(10%, -50%);
 				border-radius: 20px;
+				display: flex;
+				flex-direction: column;
+				flex-wrap: wrap;
 
 				.popup_titile {
+					width: 100%;
 					background-color: #5381c6;
-					padding: 10px 0;
+					padding: 10px;
 					font-size: 18px;
 					color: #fff;
+					box-sizing: border-box;
+					padding-left: 2%;
 				}
+			}
+
+			.popup_cente {
+				width: 100%;
+				display: flex;
+				justify-content: flex-start;
+				align-content: flex-start;
+				flex: 1;
+				flex-wrap: wrap;
+				overflow-y: auto;
 			}
 
 			.popup_item {
 				margin-top: 10px;
-				float: left;
+				// float: left;
 				width: 12%;
 				padding-left: 2%;
 
 				img {
 					width: 110px;
 					height: 210px;
+				}
+
+				& > div {
+					text-align: center;
 				}
 
 				input {
@@ -968,15 +1101,27 @@
 				padding-right: 2%;
 			}
 
+			.popup_bottom {
+				padding: 10px 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+
+				& > div {
+					margin: 0 5px;
+				}
+			}
+
 			.popup_btn {
 				background-color: #1e9fff;
-				padding: 5px 10px;
 				cursor: pointer;
 				color: #fff;
-				position: absolute;
-				bottom: 15px;
-				left: 50%;
-				transform: translate(-50%, 0);
+				width: 60px;
+				height: 30px;
+				line-height: 30px;
+				text-align: center;
+				margin: 10px auto;
+				box-sizing: border-box;
 			}
 		}
 
@@ -1282,6 +1427,11 @@
 	.invite-text-box-text:focus {
 		border: none;
 		outline: none;
+	}
+
+	.btn_custom_cancel{
+    float: right;
+    margin-left: 10px !important;
 	}
 
 	@media screen and (max-width:1600px) {

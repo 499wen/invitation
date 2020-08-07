@@ -2,6 +2,7 @@ import $, { data } from "jquery";
 
 
 import QRCode from "qrcodejs2";
+import html2canvas from 'html2canvas'
 
 
 import {
@@ -52,7 +53,8 @@ export default {
           model: {
             height: 649,
             width: 375,
-            img: '../assets/temp-01.jpg'
+            img: '../assets/temp-01.jpg',
+            pattern: 'multiPage'
           },
           formAttr: {
             'enable': true, // 使用表单标记
@@ -72,6 +74,7 @@ export default {
         token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI'
       },
       popupVisible: false, //控制选择背景图弹出层的隐藏与显示
+      popupModel: false, // 控制模板弹出层的隐藏与显示
       isLongPage: true, //是否为长页模式
       longPageHeight: 649, //长页的长度，单位px
       longPageHeightArray: [],
@@ -142,8 +145,21 @@ export default {
         },
         webTitle: "",
         selKey: 0
-      }
+      },
+      invitaModel: [],
+      meetingId: '4028804373a3f9b50173a3fbbd1e0000'
     };
+  },
+  created() {
+    let that = this
+
+    this.$http.get(`/api/meetingcenter/MeetingTemplate/MeetingTemplateFindAll/${this.meetingId}`).then(res => {
+      console.log(res)
+      that.invitaModel = res.data
+    }).catch(err => {
+      console.log(err)
+      that.invitaModel = []
+    })
   },
 
   mounted: function() {
@@ -176,7 +192,7 @@ export default {
     }
 
 
-    if(true){
+    if(false){
 
       // 模拟数据
       var dataCollection = JSON.parse(localStorage.getItem('dataCollection')) || 
@@ -187,7 +203,8 @@ export default {
           model: {
             height: 649,
             width: 375,
-            img: '../assets/temp-01.jpg'
+            img: '../assets/temp-01.jpg',
+            pattern: 'multiPage'
           },
           formAttr: {
             'enable': true, // 使用表单标记
@@ -209,7 +226,7 @@ export default {
 return 
     this.$http
     .get(
-      `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/4028804373a3f9b50173a3fbbd1e0000`)
+      `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/${this.meetingId}`)
     .then(res => {
       console.log(res);
       // 数据初始化
@@ -328,6 +345,128 @@ return
 
   },
   methods: {
+    // 删除模板
+    delModel() {
+      let that = this,
+      id = this.selectModel.id
+
+      this.$confirm('是否删除此模板?', '提示', {
+        cancelButtonClass: 'btn_custom_cancel',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 确认
+        this.$http.delete(`/api/meetingcenter/MeetingTemplate/MeetingTemplateDeleteOne/${id}`, { meetingId: this.meetingId }).then(res => {
+          console.log(res)
+          that.$message.success('删除成功！')
+          that.invitaModel.filter( (item, idx) => item.id == id && that.invitaModel.splice(idx, 1))
+        }).catch(err => {
+          console.log(err)
+        })
+      })
+
+    },
+    // 选中模板 - 按钮
+    modelBtn(){
+      this.dataCollection = JSON.parse(this.selectModel.dataVal)
+      this.curPage = 1
+      
+      // 还原元素
+      reduction(this)
+      this.popupModel = false
+    },
+    // 选择模板
+    changeBgModel(idx){
+      this.selectModel = this.invitaModel[idx]
+    },
+    /**
+     * 邀请函页面模式(弃用)
+     *  功能机制:
+     *    multiPage: 多页模式
+     *        可以增加多个页面, 在移动端以轮播的方式一页一页翻看. 不能设置页面高度
+     * 
+     *    longPage: 长页模式
+     *        只有一个页面, 在移动端以滚动条的方式滑动. 可以设置页面高度
+     * 
+     */
+    pattern(e, type){
+      let self = e.path[0]
+      this.dataCollection[0].model.pattern = type
+
+      console.log(e.path[0])
+      // 移出 select
+      $('.select').removeClass('select')
+
+      // 给点击的dom 添加select
+      self.classList.add('select')
+      if(type == 'multiPage'){
+
+      } else if(type == 'longPage'){
+
+      }
+    },
+    // 保存模板
+    presModel(e){
+      // HTML5canvas 生成图片
+      var that = this
+      // var opts = {
+      //     logging: true, // 启用日志记录以进行调试 (发现加上对去白边有帮助)
+      //     allowTaint: true, // 否允许跨源图像污染画布
+      //     backgroundColor: null, // 解决生成的图片有白边
+      //     useCORS: true // 如果截图的内容里有图片,解决文件跨域问题
+      // }
+      // // eslint-disable-next-line no-undef
+      // html2canvas($('#mc')[0], opts).then((canvas) => {
+      //     var dataurl = canvas.toDataURL('image/png')
+      //     // that.dataURL = url.substring(url.indexOf(",") + 1)
+      //     // console.log(url)
+      //     // that.zip()
+      //     var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+      //     bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      //     while(n--){
+      //         u8arr[n] = bstr.charCodeAt(n);
+      //     }
+      //     var obj = new Blob([u8arr], {type:mime});
+      //     var fd = new FormData();
+      //     fd.append("upfile", obj,"image.png");
+      //     console.log(obj)
+      //     $.ajax({
+      //         url: "/api/filecenter/file/file",
+      //         type: "POST",
+      //         processData: false,
+      //         contentType: false,
+      //         headers: {
+      //           'content-type': 'application/json;charset=UTF-8',
+      //           Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI',
+      //           token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI'
+      //         },
+      //         data: fd,
+      //         success: function (data) {
+      //             console.log(data);
+      //         }
+      //     })
+      // })
+
+      // return 
+      var meetingInviteTemplates = [
+        {
+          dataVal: JSON.stringify(this.dataCollection), // 
+          imgId: 'https://dss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=1435914830,1297864403&fm=26&gp=0.jpg',
+          meetingId: this.meetingId
+        }
+      ]
+
+      this.$http.post('/api/meetingcenter//MeetingTemplate/MeetingTemplateSave', meetingInviteTemplates).then(res => {
+        console.log(res)
+      }).catch(err => {
+        console.log(err)
+      })
+    },
+    // 上传背景图片
+    bgiUpload(e){
+      console.log(e)
+    },
     changeZindex: function(val) {
       console.log('置顶， 置底')
       $(this.tNode).css('z-index', val)
@@ -392,19 +531,39 @@ return
         $('.justify-center')[0].onmouseup = null
       }
 
-      // $('.justify-center')[0].onmouseout = function(e){
-      //   console.log(e)
-      //   if(t){
-      //     clearInterval(t)
-      //   }
-      //   $('.justify-center')[0].onmousemove = null
-      //   $('.justify-center')[0].onmouseout = null
-      // }
+      /**
+       * 鼠标移出 .justify-center 时关闭定时器
+       *    判断移出的dom   内部dom不关闭, 外部dom关闭
+       */
+      $('.justify-center')[0].onmouseout = function(e){
+        
+        if(e.toElement == null){
+          if(t){
+            clearInterval(t)
+          }
+          $('.justify-center')[0].onmousemove = null
+          $('.justify-center')[0].onmouseout = null
+        } else {
+          var leaveDom = [...e.toElement.classList]
+          var cla = ['not_select', ]
+          var bool = []
+  
+          cla.map(item => leaveDom.map(i => item == i && bool.push(true)))
+          
+          if(bool[0]){
+            if(t){
+              clearInterval(t)
+            }
+            $('.justify-center')[0].onmousemove = null
+            $('.justify-center')[0].onmouseout = null
+          }
+        }
+      }
 
     },
-    // 当鼠标在伸缩盒子上按下
-    elongateMove: function(e) {
-      // 长页高度改变的值，值越大，改变速度越快
+    // 当鼠标在伸缩盒子上按下 
+    elongateMove: function(e) { 
+      // 长页高度改变的值，值越大，改变速度越快 
       let changePX = 5;
       let this_ = this;
       if (this_.isElongate) {
@@ -448,7 +607,7 @@ return
     initForm: function(val, need = 'update') {
       // addSubmitForm(this);
       if(val){
-        var dom = document.querySelector("." + val)
+        var dom = document.querySelector("." + val) 
         var bool = this.dataCollection[this.curPage - 1].formAttr[val]
         // var formParent = document.querySelector('.formTemplate .invite-text-box-text')
         if(bool){
@@ -696,7 +855,7 @@ return
       return 
       this.$http
         .post(
-          `/api/meetingcenter/meetingInvitation/meetingInvitation/4028804373a3f9b50173a3fbbd1e0000`,
+          `/api/meetingcenter/meetingInvitation/meetingInvitation/${this.meetingId}`,
           data
         )
         .then(res => {
@@ -871,21 +1030,32 @@ return
     },
     // 删除页面
     deletePage(idx) {
-      // 重置数据
-      this.empty()
-      
-      // 判断idx 与 curPage大小关系
-      if(idx < this.curPage){
-        this.curPage --
-      }
+      let that = this
+      // 提示
+      this.$confirm('是否删除该页面?', '提示', {
+        cancelButtonClass: 'btn_custom_cancel',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 确认
+        // 删除 dataCollection 对应列
+        that.dataCollection.filter((item, index) => 
+          index == idx && that.dataCollection.splice(index, 1)
+        )
 
-      // 删除 dataCollection 对应列
-      this.dataCollection.filter((item, index) => 
-        index == idx && this.dataCollection.splice(index, 1)
-      )
+        // 修改 对应的page 值
+        that.dataCollection.filter(( item, index) => item.page = index + 1)
 
-      // 修改 对应的page 值
-      this.dataCollection.filter(( item, index) => item.page = index + 1)
+        // 判断idx 与 curPage大小关系
+        if(idx < that.curPage){
+          that.contentClick(idx - 1)
+        }
+
+      }).catch(() => {
+          // 取消
+      });
+
     },
     clickTag: function(e) {
       hideBox();

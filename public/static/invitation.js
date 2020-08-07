@@ -140,6 +140,15 @@ export function drop(event, _this) {
 
 		// 给文本元素增加 oninput 事件
 		node.oninput = getText
+
+		/**
+		 * 文本元素获取焦点 清空提示内容
+		 * 文本元素失去焦点 内容为空给出提示
+		 */
+		var textDom = $(node).find('.invite-text-box-text')[0]
+		textDom.onfocus = getFocus
+		textDom.onblur = getBlur
+
 	} else if (data == 'image') {
 		nodeValue = "图片";
 		node = document.getElementById('imageTemplate').cloneNode(true);
@@ -414,6 +423,9 @@ export function addSubmitForm(_this) {
 		return
 	}
 	
+	// 取出其它的选中效果
+	$('.invite-text-box-border').css('display', 'none')
+
 	// 获取 vue 对象
 	vue = _this
 
@@ -464,6 +476,8 @@ export function addSubmitForm(_this) {
 	// 将表单记录添进 dataCollection.eleList
 	eleList.push({id: node.id, nodeValue: '表单'})
 
+	_this.defaultStyle = formData
+
 	console.log(dataPre, eleList)
 	// initNode(node, _this)
 // return 
@@ -482,16 +496,17 @@ export function addSubmitForm(_this) {
 			
 	})
 	$(node).mousedown(function(e) {
+
 		$(".check").removeClass("check")
 		 $("#" +'itemId'+ node.id).addClass("check");
 		
 		// var nodeElement = $("#"+ node.id);
 		// console.log("zzzz",nodeElement.css('color'))
 		// 鼠标按下时，初始化当前控件的各项属性
-		if ($(e.target).hasClass('edit-text')) {
-			// moveMethod='topResize'
-			return
-		}
+		// if ($(e.target).hasClass('edit-text')) {
+		// 	// moveMethod='topResize'
+		// 	return
+		// }
 		console.log("mouseIsDown = " + mouseIsDown)
 		mouseIsDown = true;
 		currentNode = this;
@@ -500,9 +515,10 @@ export function addSubmitForm(_this) {
 		moveMethod = 'move';
 		let trans = $(this).css('transform')
 		let s = trans.split(',');
-		// nodeWidth = $(this).css('width').replace('px', '') - 0;
-		// nodeHeight = $(this).css('height').replace('px', '') - 0
-		// console.log(nodeWidth, nodeHeight, s)
+		console.log(s)
+		nodeWidth = $(this).css('width').replace('px', '') - 0;
+		nodeHeight = $(this).css('height').replace('px', '') - 0
+		console.log(nodeWidth, nodeHeight, s)
 		nodeX = s[4] - 0
 		nodeY = s[5].substr(0, s[5].length - 1) - 0
 		console.log($(e.target).hasClass('top-line-point'))
@@ -581,15 +597,19 @@ export function initNode(node, _this,text) {
 		// console.log(nodeWidth, nodeHeight, s)
 		nodeX = s[4] - 0
 		nodeY = s[5].substr(0, s[5].length - 1) - 0
-		console.log($(e.target).hasClass('top-line-point'))
+		console.log($(e.target).hasClass('bottom-line-point'))
 		if ($(e.target).hasClass('top-line-point')) {
 			moveMethod = 'topResize'
+			$(e.target).css('cursor', 's-resize')
 		} else if ($(e.target).hasClass('left-line-point')) {
 			moveMethod = 'leftResize'
+			$(e.target).css('cursor', 'w-resize')
 		} else if ($(e.target).hasClass('right-line-point')) {
 			moveMethod = 'rightResize'
+			$(e.target).css('cursor', 'w-resize')
 		} else if ($(e.target).hasClass('bottom-line-point')) {
 			moveMethod = 'bottomResize'
+			$(e.target).css('cursor', 's-resize')
 		} else if ($(e.target).hasClass('left-top-point')) {
 			moveMethod = 'leftTopResize'
 		} else if ($(e.target).hasClass('right-top-point')) {
@@ -634,6 +654,15 @@ export function reduction(_this){
 
 			// 给文本元素增加 oninput 事件
 			node.oninput = getText
+
+			/**
+			 * 文本元素获取焦点 清空提示内容
+			 * 文本元素失去焦点 内容为空给出提示
+			 */
+			var textDom = $(node).find('.invite-text-box-text')[0]
+			textDom.onfocus = getFocus
+			textDom.onblur = getBlur
+			
 		} else if (data == 'image') {
 			node = document.getElementById('imageTemplate').cloneNode(true);
 			// 将元素 默认数据 统一保存在defaultStyle 对象中
@@ -868,6 +897,20 @@ function getText(e){
 
 	let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
 	dataPre.filter( item => item.key == id ? item.value.cte = this.innerText : '')
+}
+
+// 获取焦点
+function getFocus(e){
+	if(e.path[0].innerText == '点击这里编辑'){
+		e.path[0].innerText = ''
+	}
+}
+
+// 失去焦点
+function getBlur(e){
+	if(e.path[0].innerText == ''){
+		e.path[0].innerText = '点击这里编辑'
+	}
 }
 
 export function hideBox(showStyle) {
