@@ -18,7 +18,7 @@
 					<img src="./../assets/addpageBtn.png" alt />
 				</div>
 				<p @click="addPage">添加页面</p>
-				<p @click="presModel">保存模板</p>
+				<!-- <p @click="presModel">保存模板</p> -->
 			</div>
 		</div>
 
@@ -81,10 +81,17 @@
 						<li>背景</li>
 					</ul>
 					<ul class="pl20 verson" @click="popupModel = true">
-						<img class="invittext" src="../../public/static/images/invitbg.png" title="点击打开背景样式" />
+						<img class="invittext" width="30" height="30" src="../../public/static/images/model.png" title="点击打开模板" />
 						<li>模板</li>
 					</ul>
-					<el-button size="small" style="height: 30px;margin-left: 25px" @click="save">提交</el-button>
+					<ul class="pl20 verson" @click="presModel">
+						<img class="invittext" width="30" height="30" src="../../public/static/images/addmodel.png" title="添加模板" />
+						<li>添加模板</li>
+					</ul>
+					<ul class="pl20 verson" @click="save">
+						<img class="invittext" width="30" height="30" src="../../public/static/images/shangchuan.png" title="提交邀请函" />
+						<li>提交</li>
+					</ul>
 				</div>
 				<!-- 	<div class="po-r inp-control mt15 mr15 ml10">class="btn_save invit-save" type="button" id="upEdit" data-loading-text="正在提交，请稍后..."
 					<button class="btn btn-warning invit-save" type="button" id="upEdit" data-loading-text="正在提交，请稍后..." @click="save">保存并提交
@@ -96,7 +103,7 @@
 			<!--  -->
 			<div id="templateStyle" v-if="tNode && defaultStyle.type != 'form'">
 				<el-collapse v-model="activeName">
-					<el-collapse-item title="基本样式" name="1" style="padding-right: 15px;">
+					<el-collapse-item title="基本样式" name="1" style="padding-right: 0px;">
 						<div class="layui-colla-content layui-show">
 							<div v-if="!isImage" class="single">
 								<!-- <div class="mb10 clear_float" style="text-align: left"> -->
@@ -270,7 +277,7 @@
 							</div>
 						</div>
 					</el-collapse-item>
-					<el-collapse-item title="边框样式" name="2" style="padding-right: 15px;">
+					<el-collapse-item title="边框样式" name="2" style="padding-right: 0px;">
 						<div class="layui-colla-content single">
 							<div class="flex invite-progress">
 								<span class="mr15 style_label">宽度</span>
@@ -315,7 +322,7 @@
 
 						</div>
 					</el-collapse-item>
-					<el-collapse-item title="阴影样式" name="3" style="padding-right: 15px;">
+					<el-collapse-item title="阴影样式" name="3" style="padding-right: 0px;">
 						<div class="layui-colla-content single">
 							<div class="flex invite-progress">
 								<span class="mr15 style_label">大小</span>
@@ -601,7 +608,9 @@
 				<div class="popup_bottom">
 					<el-upload
 						class="upload-demo"
-						action="https://jsonplaceholder.typicode.com/posts/"
+						:headers="headers"
+						action="/api/filecenter/file/file"
+						accept="image/*" :show-file-list="false"
 						:on-success='bgiUpload'>
 						<el-button size="small" type="primary">点击上传</el-button>
 					</el-upload>
@@ -616,7 +625,7 @@
 		<div class="popup_bg" v-show="popupModel">
 			<div class="white_box">
 				<div class="popup_titile">
-					选择背景图
+					选择模板
 				</div>
 				<div class="popup_cente">
 
@@ -637,8 +646,9 @@
 						<el-button size="small" type="primary">点击上传</el-button>
 					</el-upload> -->
 
-					<el-button size="small" type="primary" @click="modelBtn">选择</el-button>
-					<el-button size="small" type="danger" @click="delModel">删除</el-button>
+					<el-button size="small" v-if="selectModel" type="primary" @click="modelBtn">选择</el-button>
+					<el-button size="small" v-if="selectModel" type="danger" @click="delModel">删除</el-button>
+					<el-button size="small" @click="popupModel = false">关闭</el-button>
 				</div>
 			</div>
 		</div>
@@ -866,8 +876,8 @@
 	}
 
 	#qrcode {
-		width: 120px;
-		height: 120px;
+		width: 130px;
+		height: 130px;
 		margin: 0 auto;
 	}
 	.flex {
@@ -976,7 +986,7 @@
 		}
 
 		.iRight {
-			width: 400px;
+			width: 420px;
 			overflow: auto;
 			height: 93%;
 			background-color: #f4f4f4;
@@ -1010,7 +1020,7 @@
 			width: 375px;
 			height: 649px;
 			position: relative;
-			background-size: 100% auto;
+			background-size: 100% 100%;
 			margin: 20px auto 0px auto;
 			background-repeat: no-repeat;
 			border: 1px dashed #ccc;

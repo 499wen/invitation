@@ -9,7 +9,7 @@ let mouseX = 0;
 let mouseY = 0;
 let nodeX = 0;
 let nodeY = 0; 
-let nodeWidth; 
+let nodeWidth;  
 let nodeHeight;
 
 let moveMethod;
@@ -67,7 +67,7 @@ var textStyle = {
 	"textDecoration": false, // 文本下划线
 	"fontStyle": false, // 文本斜体
 
-	'cte': ''
+	'cte': '' // 内容
 }
 
 // 图片
@@ -89,7 +89,7 @@ var imgStyle = {
 	"width": '120px', // 文本基础宽度
 	"height": '120px', // 文本基础高度
 	
-	"url": '', // 图片链接
+	"url": '', // 图片id
 }
 
 import $, { data } from 'jquery'
@@ -248,9 +248,6 @@ export function drop(event, _this) {
 	// $(node).css('position', 'absolute')
 	// console.log("设置 xy = " + x, y)
 	// $(node).css('transform', "translate(" + x + "px," + y + "px)")
-
-
-
 	console.log(defaultStyle)
 	// 把控件保存起来
 	// nodes.set(node.id, node)

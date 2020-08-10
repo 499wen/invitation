@@ -81,7 +81,7 @@ export default {
       tempScreenY: 0, //鼠标的Y轴坐标
       isElongate: false, //是否处于拉伸长页状态
       longInterval: null, //拉伸长页的定时器
-      codeVisible: null, //控制二维码的显示与隐藏
+      codeVisible: false, //控制二维码的显示与隐藏
       needForm: false,
       showStyle: true,
       showKey: 0,
@@ -147,19 +147,14 @@ export default {
         selKey: 0
       },
       invitaModel: [],
-      meetingId: '4028804373a3f9b50173a3fbbd1e0000'
+      meetingId: '4028804373a3f9b50173a3fbbd1e0000',
+      selectModel: null,
+      id: null
     };
   },
   created() {
-    let that = this
-
-    this.$http.get(`/api/meetingcenter/MeetingTemplate/MeetingTemplateFindAll/${this.meetingId}`).then(res => {
-      console.log(res)
-      that.invitaModel = res.data
-    }).catch(err => {
-      console.log(err)
-      that.invitaModel = []
-    })
+    // 请求模板
+    this.initModel()
   },
 
   mounted: function() {
@@ -206,7 +201,7 @@ export default {
             img: '../assets/temp-01.jpg',
             pattern: 'multiPage'
           },
-          formAttr: {
+          formAttr: { 
             'enable': true, // 使用表单标记
             'sex': true, // 性别
             'company': true, // 单位
@@ -216,6 +211,7 @@ export default {
           },
       }]
       
+
       // 数据初始化
       this.dataCollection = dataCollection 
       this.curPage = 1
@@ -223,7 +219,7 @@ export default {
       // 还原元素
       reduction(this)
     }
-return 
+// return 
     this.$http
     .get(
       `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/${this.meetingId}`)
@@ -231,6 +227,7 @@ return
       console.log(res);
       // 数据初始化
       this.dataCollection = JSON.parse(JSON.parse(res.data[0].dataVal).meetingInvitation)
+      this.id = res.data[0].id
       this.curPage = 1
       // 还原元素
       reduction(this)
@@ -357,10 +354,11 @@ return
         type: 'warning'
       }).then(() => {
         // 确认
-        this.$http.delete(`/api/meetingcenter/MeetingTemplate/MeetingTemplateDeleteOne/${id}`, { meetingId: this.meetingId }).then(res => {
+        this.$http.delete(`/api/meetingcenter/meetingTemplate/meetingTemplateDeleteOne/${id}`, { meetingId: this.meetingId }).then(res => {
           console.log(res)
           that.$message.success('删除成功！')
           that.invitaModel.filter( (item, idx) => item.id == id && that.invitaModel.splice(idx, 1))
+          that.selectModel = null
         }).catch(err => {
           console.log(err)
         })
@@ -457,8 +455,10 @@ return
         }
       ]
 
-      this.$http.post('/api/meetingcenter//MeetingTemplate/MeetingTemplateSave', meetingInviteTemplates).then(res => {
+      this.$http.post('/api/meetingcenter/meetingTemplate/meetingTemplateSave', meetingInviteTemplates).then(res => {
         console.log(res)
+        this.$message.success('保存成功！')
+        this.initModel()
       }).catch(err => {
         console.log(err)
       })
@@ -466,6 +466,7 @@ return
     // 上传背景图片
     bgiUpload(e){
       console.log(e)
+
     },
     changeZindex: function(val) {
       console.log('置顶， 置底')
@@ -697,6 +698,8 @@ return
       // 更新页码
       this.curPage = index + 1
 
+      this.codeVisible = false
+
       // 还原元素
       reduction(this)
     },
@@ -820,6 +823,25 @@ return
       event.preventDefault();
     },
     save: function() {
+
+      var meetingInviteImgs = [
+        {
+          "imgId": "string",
+        }
+      ]
+      this.$http
+      .post(
+        `/api/meetingcenter/meetingInvieImg/meetingInvieImgSave/${this.meetingId}`,
+        meetingInviteImgs
+      ).then(res => {
+        console.log(res)
+      }).catch(err => {
+        console.log(err)
+      })
+
+
+      return
+
       // $("#qrcode").empty(); //清除二维码
       //     let mtId = this.meetId ? this.meetId : this.utils.getUrlParma("meetingId");
       let _this = this;
@@ -832,6 +854,10 @@ return
       let data = {
         meetingInvitation: JSON.stringify(_this.dataCollection),
         // meetingId: '4028804373a3f9b50173a3fbbd1e0000'
+      }
+
+      if(this.id) {
+        data.id = this.id
       }
       // for (let i = 0; i < _this.tempData.list.length; i++) {
       //   // let tmp= _this.tempData.list[i];
@@ -852,7 +878,7 @@ return
 
       localStorage.setItem('dataCollection', data.meetingInvitation)
 
-      return 
+      // return 
       this.$http
         .post(
           `/api/meetingcenter/meetingInvitation/meetingInvitation/${this.meetingId}`,
@@ -912,6 +938,17 @@ return
       resultArray.forEach((item, index) => {
         idMap.set(resultArray[index], showKey);
       });
+    },
+    initModel(){
+      let that = this
+
+      this.$http.get(`/api/meetingcenter/meetingTemplate/meetingTemplateFindAll/${this.meetingId}`).then(res => {
+        console.log(res)
+        that.invitaModel = res.data
+      }).catch(err => {
+        console.log(err)
+        that.invitaModel = []
+      })
     },
     initPage: function() {
       console.log("会议邀请函初始化");
