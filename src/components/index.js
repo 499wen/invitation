@@ -1,6 +1,4 @@
 import $, { data } from "jquery";
-
-
 import QRCode from "qrcodejs2";
 import html2canvas from 'html2canvas'
 
@@ -53,7 +51,7 @@ export default {
           model: {
             height: 649,
             width: 375,
-            img: '../assets/temp-01.jpg',
+            img: '',
             pattern: 'multiPage'
           },
           formAttr: {
@@ -70,8 +68,8 @@ export default {
       activeName: [],
       location: window.location.host,
       headers: {
-        Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI',
-        token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI'
+        Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU',
+        token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU'
       },
       popupVisible: false, //控制选择背景图弹出层的隐藏与显示
       popupModel: false, // 控制模板弹出层的隐藏与显示
@@ -149,10 +147,24 @@ export default {
       invitaModel: [],
       meetingId: '4028804373a3f9b50173a3fbbd1e0000',
       selectModel: null,
-      id: null
+      id: null,
+      bgImage: [],
+      selectImg: null
     };
   },
   created() {
+    let that = this
+
+    this.$http.get(`/api/meetingcenter/meetingInvieImg/meetingInvieImgFindAll/${this.meetingId}`).then(res => {
+      console.log(res)
+      if(res.code == '000'){
+        that.bgImage = res.data
+        that.dataCollection[that.curPage - 1].model.img = res.data[0].imgId
+      }
+    }).catch(err => {
+      console.log(err)
+    })
+
     // 请求模板
     this.initModel()
   },
@@ -198,7 +210,7 @@ export default {
           model: {
             height: 649,
             width: 375,
-            img: '../assets/temp-01.jpg',
+            img: '',
             pattern: 'multiPage'
           },
           formAttr: { 
@@ -212,7 +224,7 @@ export default {
       }]
       
 
-      // 数据初始化
+      // 数据初始化 
       this.dataCollection = dataCollection 
       this.curPage = 1
       
@@ -225,15 +237,17 @@ export default {
       `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/${this.meetingId}`)
     .then(res => {
       console.log(res);
-      // 数据初始化
-      this.dataCollection = JSON.parse(JSON.parse(res.data[0].dataVal).meetingInvitation)
-      this.id = res.data[0].id
-      this.curPage = 1
-      // 还原元素
-      reduction(this)
+      if(res.data.length){
+        // 数据初始化
+        this.dataCollection = JSON.parse(JSON.parse(res.data[0].dataVal).meetingInvitation)
+        this.id = res.data[0].id
+        this.curPage = 1
+        // 还原元素
+        reduction(this)
+      }
+      
     });
    return
-
   },
   watch: {
     // ["dataCollection[0].dataPre"]: function (val){
@@ -342,6 +356,48 @@ export default {
 
   },
   methods: {
+    // 打开二维码
+    openQrcode(){
+      // 保存邀请函
+      this.save(false)
+
+      var obj = {
+        meetingId: this.meetingId
+      }
+      
+      console.log('http://192.168.0.241:14444?data=' + encodeURI(JSON.stringify(obj)))
+      new QRCode(this.$refs.qrcode, {
+        text: 'http://192.168.0.241:14444?data=' + encodeURI(JSON.stringify(obj)),
+        width: 130,
+        height: 130,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+      })
+
+      this.codeVisible = !this.codeVisible
+    },
+    // 删除背景图
+    delBgimg(){
+      if(this.bgImage.length == 1){
+        this.$message.info('至少存在一张图片')
+        return 
+      }
+
+      this.$http.delete(`/api/meetingcenter/meetingInvieImg/meetingInvieImgDeleteOne/${this.selectImg.id}`, this.meetingId).then(res => {
+        console.log(res)
+        if(res.code == '000'){
+          this.$message.success('删除成功！')
+          this.bgImage.filter((item, idx) => {
+            if(item.id == this.selectImg.id){
+              this.bgImage.splice(idx, 1)
+            }
+          })
+
+          this.dataCollection[this.curPage - 1].model.img = this.bgImage[0].imgId
+          this.selectImg = null
+        }
+      })
+    },
     // 删除模板
     delModel() {
       let that = this,
@@ -408,65 +464,82 @@ export default {
     presModel(e){
       // HTML5canvas 生成图片
       var that = this
-      // var opts = {
-      //     logging: true, // 启用日志记录以进行调试 (发现加上对去白边有帮助)
-      //     allowTaint: true, // 否允许跨源图像污染画布
-      //     backgroundColor: null, // 解决生成的图片有白边
-      //     useCORS: true // 如果截图的内容里有图片,解决文件跨域问题
-      // }
-      // // eslint-disable-next-line no-undef
-      // html2canvas($('#mc')[0], opts).then((canvas) => {
-      //     var dataurl = canvas.toDataURL('image/png')
-      //     // that.dataURL = url.substring(url.indexOf(",") + 1)
-      //     // console.log(url)
-      //     // that.zip()
-      //     var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-      //     bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-      //     while(n--){
-      //         u8arr[n] = bstr.charCodeAt(n);
-      //     }
-      //     var obj = new Blob([u8arr], {type:mime});
-      //     var fd = new FormData();
-      //     fd.append("upfile", obj,"image.png");
-      //     console.log(obj)
-      //     $.ajax({
-      //         url: "/api/filecenter/file/file",
-      //         type: "POST",
-      //         processData: false,
-      //         contentType: false,
-      //         headers: {
-      //           'content-type': 'application/json;charset=UTF-8',
-      //           Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI',
-      //           token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0MDI4ODA0MzczYTNjYTg1MDE3M2EzY2I4ZmJhMDAwMyJ9._oKdy8sQCGMn1uxmvYbivfn7O9l5nIcNXgRcr05JaZI'
-      //         },
-      //         data: fd,
-      //         success: function (data) {
-      //             console.log(data);
-      //         }
-      //     })
-      // })
+      var opts = {
+          logging: true, // 启用日志记录以进行调试 (发现加上对去白边有帮助)
+          allowTaint: true, // 否允许跨源图像污染画布
+          backgroundColor: null, // 解决生成的图片有白边
+          useCORS: true // 如果截图的内容里有图片,解决文件跨域问题
+      }
+      // eslint-disable-next-line no-undef
+      html2canvas($('#mc')[0], opts).then((canvas) => {
+        var ImageURL = canvas.toDataURL('image/png')
+        var myfile = that.dataURLtoFile(ImageURL, Date.now() + '.png');
 
-      // return 
-      var meetingInviteTemplates = [
-        {
-          dataVal: JSON.stringify(this.dataCollection), // 
-          imgId: 'https://dss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=1435914830,1297864403&fm=26&gp=0.jpg',
-          meetingId: this.meetingId
-        }
-      ]
+        console.log(myfile)
+        // return
+        var formFile = new FormData();
+        formFile.append('file', myfile);
+        $.ajax({
+            url: "/api/filecenter/file/file",
+            type: "POST",
+            processData: false,
+            contentType: false,
+            headers: {
+              Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU',
+              token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU'
+            },
+            data: formFile,
+            success: function (result) {
+                console.log(result);
 
-      this.$http.post('/api/meetingcenter/meetingTemplate/meetingTemplateSave', meetingInviteTemplates).then(res => {
-        console.log(res)
-        this.$message.success('保存成功！')
-        this.initModel()
-      }).catch(err => {
-        console.log(err)
+                var meetingInviteTemplates = [
+                  {
+                    dataVal: JSON.stringify(that.dataCollection), // 
+                    imgId: result.data.id,
+                    meetingId: that.meetingId
+                  }
+                ]
+          
+                that.$http.post('/api/meetingcenter/meetingTemplate/meetingTemplateSave', meetingInviteTemplates).then(res => {
+                  console.log(res)
+                  that.$message.success('保存成功！')
+                  that.initModel()
+                }).catch(err => {
+                  console.log(err)
+                })
+            }
+        })
+      })
+
+
+    },
+    dataURLtoFile(base64Str, fileName) {
+      var arr = base64Str.split(','),
+      mime = arr[0].match(/:(.*?);/)[1], //base64解析出来的图片类型
+      bstr = atob(arr[1]), //对base64串进行操作，去掉url头，并转换为byte atob为window内置方法
+      len = bstr.length,
+      ab = new ArrayBuffer(len), //将ASCII码小于0的转换为大于0
+      u8arr = new Uint8Array(ab); //
+      while (len--) {
+      u8arr[len] = bstr.charCodeAt(len)
+      };
+      // 创建新的 File 对象实例[utf-8内容，文件名称或者路径，[可选参数，type：文件中的内容mime类型]]
+      return new File([u8arr], fileName, {
+      type: mime
       })
     },
     // 上传背景图片
     bgiUpload(e){
       console.log(e)
+      let that = this
+      let meetingInviteImgs = [{imgId: e.data.id}]
 
+      this.$http.post(`/api/meetingcenter/meetingInvieImg/meetingInvieImgSave/${this.meetingId}`, meetingInviteImgs).then(res => {
+        console.log(res)
+        if(res.code == '000'){
+          that.bgImage.push(...res.data)
+        }
+      })
     },
     changeZindex: function(val) {
       console.log('置顶， 置底')
@@ -630,31 +703,10 @@ export default {
     },
     changeBgImg(idx) {
       let img;
-      switch (idx) {
-        case 1:
-          img = require('./../assets/temp-01.jpg');
-          break;
-        case 2:
-          img = require('./../assets/temp-02.jpg')
-          break;
-        case 3:
-          img = require('./../assets/temp-03.jpg');
-          break;
-        case 4:
-          img = require('./../assets/temp-04.jpg');
-          break;
-        case 5:
-          img = require('./../assets/temp-05.jpg');
-          break;
-        case 6:
-          img = require('./../assets/temp-06.jpg');
-          break;
-        case 10:
-          img = require('./../assets/temp-010.png');
-          break;
-      }
-      this.tempData.selBg.imgSrc = img;
-      console.log(this.tempData.selBg.imgSrc);
+      img = this.bgImage[idx].imgId
+      this.selectImg = this.bgImage[idx]
+
+      this.dataCollection[this.curPage - 1].model.img = img
     },
     // 设置浏览器右键不触发
     rclick(){
@@ -804,6 +856,7 @@ export default {
       if (res.code == "000") {
         // let locationUrl = "/api/filecenter/file/file/" + res.data.id;
 
+        // this.dataCollection[this.curPage - 1].
         this.defaultStyle.url = "/api/filecenter/file/file/" + res.data.id;
 
         // $(this.tNode).find('.invite-text-box-text').css('background-image','url("'+res.src+'")')
@@ -822,81 +875,42 @@ export default {
       event = event || window.event;
       event.preventDefault();
     },
-    save: function() {
-
-      var meetingInviteImgs = [
-        {
-          "imgId": "string",
-        }
-      ]
-      this.$http
-      .post(
-        `/api/meetingcenter/meetingInvieImg/meetingInvieImgSave/${this.meetingId}`,
-        meetingInviteImgs
-      ).then(res => {
-        console.log(res)
-      }).catch(err => {
-        console.log(err)
-      })
-
-
-      return
-
-      // $("#qrcode").empty(); //清除二维码
-      //     let mtId = this.meetId ? this.meetId : this.utils.getUrlParma("meetingId");
+    save: function(bool = true) {
       let _this = this;
-      // if (!mtId) {
-      //   return; 
-      // }
-
-      // _this.dataCollection.meetingId = '4028804373a3f9b50173a3fbbd1e0000'
 
       let data = {
         meetingInvitation: JSON.stringify(_this.dataCollection),
-        // meetingId: '4028804373a3f9b50173a3fbbd1e0000'
       }
 
-      if(this.id) {
-        data.id = this.id
-      }
-      // for (let i = 0; i < _this.tempData.list.length; i++) {
-      //   // let tmp= _this.tempData.list[i];
-      //   let htmlObj = $($("#mc").find(".phone-item")[i]);
-      //   htmlObj
-      //     .find(">div >div >.invite-text-box-border")
-      //     .css("display", "none");
-      //   let tmp = {
-      //     meetid: mtId,
-      //     pageHeight: _this.longPageHeightArray[i],
-      //     serial: i,
-      //     content: htmlObj.html(),
-      //     imgsrc: _this.tempData.selBg.imgSrc
-      //   };
-      //   params.push(tmp);
+      // if(this.id) {
+      //   data.id = this.id
       // }
-      // console.log(meetingInvitation );
 
       localStorage.setItem('dataCollection', data.meetingInvitation)
 
       // return 
       this.$http
         .post(
-          `/api/meetingcenter/meetingInvitation/meetingInvitation/${this.meetingId}`,
+          `/api/meetingcenter/meetingInvitation/meetingInvitation/${this.meetingId}` + (this.id ? '/'+this.id : ''),
           data
         )
         .then(res => {
           console.log(res);
 
           if(res.code == "000"){
-            _this.$message({
-              type: "success",
-              message: "保存成功"
-            });
+            if(bool){
+              _this.$message({
+                type: "success",
+                message: "保存成功"
+              });
+            }
           }else{
-            _this.$message({
-              type: "error",
-              message: "保存失败，请重试"
-            });
+            if(bool){
+              _this.$message({
+                type: "error",
+                message: "保存失败，请重试"
+              });
+            }
           }
           // _this.generateQrCode();
         });
@@ -941,7 +955,7 @@ export default {
     },
     initModel(){
       let that = this
-
+      console.log('initModel')
       this.$http.get(`/api/meetingcenter/meetingTemplate/meetingTemplateFindAll/${this.meetingId}`).then(res => {
         console.log(res)
         that.invitaModel = res.data
@@ -1045,16 +1059,6 @@ export default {
 
     //添加页面
     addPage() {
-      // this.letterProduction.imgList.push('内容')
-      // console.log('内容', this.letterProduction.imgList, this.letterProduction.imgList.length)
-
-      // this.tempData.list.push({
-      //   id: (this.tempData.list[this.tempData.list.length - 1].id + 1),
-      //   msg: ""
-      // });
-      // // this.longPageHeightArray.push(649)
-      // let cta = document.querySelector(".iLeft");
-      // cta.scrollTop = cta.scrollHeight;
 
       // 重置数据
       this.empty()
@@ -1064,6 +1068,9 @@ export default {
 
       // 添加新页 数据
       this.dataCollection.push(eachPageData(this))
+
+      // 增添背景图
+      this.dataCollection[this.curPage - 1].model.img = this.bgImage[0].imgId
     },
     // 删除页面
     deletePage(idx) {

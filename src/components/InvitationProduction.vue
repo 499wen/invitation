@@ -30,7 +30,7 @@
 					<div class="pattern" @click="pattern($event, 'longPage')">长页模式</div>
 				</div>
 				<!-- 长页邀请函 -->
-				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url('+ tempData.selBg.imgSrc +');'" v-if="isLongPage">
+				<div class="po-r phone-long" :style="'text-align:center;height:'+ dataCollection[curPage - 1].model.height +'px;background-image: url(/api/filecenter/file/file/'+ dataCollection[curPage - 1].model.img +');'" v-if="isLongPage">
 					<div id="mc">
 						<div id="phonecontent">
 							<div class="phone-item" id="phone-item" :style="'height:'+ dataCollection[curPage - 1].model.height +'px;'" @drop="dropTest($event)"
@@ -45,7 +45,7 @@
 						375 x {{ dataCollection[curPage - 1].model.height }}
 					</div>
 					<!-- 鼠标悬停后展示二维码 -->
-					<div class="show_qrcode" @click="codeVisible=!codeVisible">
+					<div class="show_qrcode" @click="openQrcode">
 						<span v-if="codeVisible">收起</span>
 						<span v-else>预览</span>
 						<div class="qrcode_box" v-show="codeVisible">
@@ -549,58 +549,10 @@
 					选择背景图
 				</div>
 				<div class="popup_cente">
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-01.jpg" alt="">
+					<div class="popup_item" v-for="(item, idx) in bgImage" :key="idx">
+						<img :src="'/api/filecenter/file/file/' + item.imgId" alt="">
 						<div>
-							<input type="radio" name="bgImgRadio" checked="checked" id="" @click="changeBgImg(1)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-02.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(2)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-03.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(3)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-04.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(4)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-05.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(5)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-06.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(6)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-010.png" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(10)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-06.jpg" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(6)">
-						</div>
-					</div>
-					<div class="popup_item">
-						<img src="../../public/static/images/temp-010.png" alt="">
-						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgImg(10)">
+							<input type="radio"  name="bgImgRadio" id="" @click="changeBgImg(idx)">
 						</div>
 					</div>
 				</div>
@@ -614,7 +566,7 @@
 						:on-success='bgiUpload'>
 						<el-button size="small" type="primary">点击上传</el-button>
 					</el-upload>
-
+					<el-button size="small" type="danger" v-if="selectImg" @click="delBgimg">删除</el-button>
 					<el-button size="small" type="primary" @click="imgPopupToggle">确定</el-button>
 				</div>
 			</div>
@@ -630,7 +582,7 @@
 				<div class="popup_cente">
 
 					<div class="popup_item" v-for="(item, idx) in invitaModel" :key="idx">
-						<img :src="item.imgId" alt="">
+						<img :src="'/api/filecenter/file/file/'+item.imgId" alt="">
 						<div>
 							<input type="radio" name="bgImgRadio" id="" @click="changeBgModel(idx)">
 						</div>
