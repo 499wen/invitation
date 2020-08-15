@@ -16,6 +16,7 @@ import {
   imageDrag,
   imageDragover
 } from "../../public/static/invitation.js";
+// import { toFixed } from "core-js/fn/number/epsilon";
 
 var token = localStorage.getItem("token"), t = null
 
@@ -23,6 +24,9 @@ export default {
   props: ["meetId"], //props
   data() {
     return {
+      audio: {
+        img: true
+      },
       /**
        * dataCollection 结构
        * [
@@ -68,8 +72,8 @@ export default {
       activeName: [],
       location: window.location.host,
       headers: {
-        Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU',
-        token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU'
+        Authorization: token,
+        token
       },
       popupVisible: false, //控制选择背景图弹出层的隐藏与显示
       popupModel: false, // 控制模板弹出层的隐藏与显示
@@ -137,15 +141,15 @@ export default {
           msg: ""
         }],
         // selBg取数组中第一个数据
-        selBg: {
-          id: "",
-          imgSrc: require('../assets/temp-01.jpg')
-        },
+        // selBg: {
+        //   id: "",
+        //   imgSrc: require('../../assets/temp-01.jpg')
+        // },
         webTitle: "",
         selKey: 0
       },
       invitaModel: [],
-      meetingId: '4028804373a3f9b50173a3fbbd1e0000',
+      meetingId: 'Bu3L5XMBa3qYx5S9GpUS', // b4YV4XMBqsHl2Dc3yhxB Bu3L5XMBa3qYx5S9GpUS
       selectModel: null,
       id: null,
       bgImage: [],
@@ -153,11 +157,17 @@ export default {
     };
   },
   created() {
+    // console.log('invitation: create')
+    // if(this.utils.getUrlParma("meetingId")){
+    //   this.meetingId = this.utils.getUrlParma("meetingId") || this.meetId
+    // }
+
+    // return
     let that = this
 
     this.$http.get(`/api/meetingcenter/meetingInvieImg/meetingInvieImgFindAll/${this.meetingId}`).then(res => {
       console.log(res)
-      if(res.code == '000'){
+      if(res.code == '000' && res.data.length){
         that.bgImage = res.data
         that.dataCollection[that.curPage - 1].model.img = res.data[0].imgId
       }
@@ -170,9 +180,11 @@ export default {
   },
 
   mounted: function() {
-      if(this.$parent.$parent.currentName == 'invitation'){
-        this.initPage();
-      }
+      // if(this.$parent.$parent.currentName == 'invitation'){
+      //   console.log('invitation: mounted')
+        
+      //   this.initPage();
+      // }  
     var _this = this;
     var meetingId = _this.meetId;
     // if (meetingId === undefined) {
@@ -237,23 +249,24 @@ export default {
       `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/${this.meetingId}`)
     .then(res => {
       console.log(res);
-      if(res.data.length){
+      if(res.code == '000' && res.data && res.data.length){
         // 数据初始化
-        this.dataCollection = JSON.parse(JSON.parse(res.data[0].dataVal).meetingInvitation)
         this.id = res.data[0].id
+        this.beginTime = res.data[0].beginTime
+        this.dataCollection = JSON.parse(res.data[0].dataVal)
         this.curPage = 1
         // 还原元素
         reduction(this)
       }
       
     });
-   return
   },
   watch: {
-    // ["dataCollection[0].dataPre"]: function (val){
-    //   console.log(val)
-    // },
-
+    // 监听监听defaultStyle下的marginRight
+    "defaultStyle.marginRight": function(val) {
+      this.defaultStyle.marginRight = val
+      $(this.tNode).find('img').css('margin-right', val + 'px')
+    },
     // 监听defaultStyle下的fontFamily，即字体  : "",
     "defaultStyle.fontFamily": function(val) {
       this.defaultStyle.fontFamily = val
@@ -356,28 +369,90 @@ export default {
 
   },
   methods: {
+
+    // 宽度铺满
+    widthTile(){
+      this.tNode.style.width = (375 / .96).toFixed(4) + 'px'
+      this.defaultStyle['el-x'] = -((375 / .96).toFixed(4) - 375) / 2
+      var x = this.defaultStyle['el-x'],
+          y = this.defaultStyle['el-y']
+      this.tNode.style.transform = `translate(${x}px, ${y}px)`
+    },
+    initPage(){
+      this.meetingId = this.utils.getUrlParma("meetingId") || this.meetId
+
+      if(!this.meetingId) return 
+      let that = this
+
+      this.$http.get(`/api/meetingcenter/meetingInvieImg/meetingInvieImgFindAll/${this.meetingId}`).then(res => {
+        console.log(res)
+        if(res.code == '000' && res.data.length){
+          that.bgImage = res.data
+          that.dataCollection[that.curPage - 1].model.img = res.data[0].imgId
+        }
+      }).catch(err => {
+        console.log(err)
+      })
+  
+      // 请求模板
+      this.initModel()
+
+      this.$http
+      .get(
+        `/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/${this.meetingId}`)
+      .then(res => {
+        console.log(res);
+        if(res.code == '000' && res.data && res.data.length){
+          // 数据初始化
+          this.id = res.data[0].id
+          this.beginTime = res.data[0].beginTime
+          this.dataCollection = JSON.parse(res.data[0].dataVal)
+          this.curPage = 1
+          // 还原元素
+          reduction(this)
+        }
+        
+      });
+    },
     // 打开二维码
     openQrcode(){
+      // 请先保存
+      // if(this.)
+
+      // 清除二维码
+      var qrcode = this.$refs.qrcode
+      $(qrcode).empty()
+
       // 保存邀请函
-      this.save(false)
+      var id = this.save(false)
+
+      // return 
 
       var obj = {
         meetingId: this.meetingId
       }
       
       console.log('http://192.168.0.241:14444?data=' + encodeURI(JSON.stringify(obj)))
-      new QRCode(this.$refs.qrcode, {
+      new QRCode(qrcode, {
         text: 'http://192.168.0.241:14444?data=' + encodeURI(JSON.stringify(obj)),
         width: 130,
         height: 130,
         colorDark: '#000000',
         colorLight: '#ffffff',
       })
-
       this.codeVisible = !this.codeVisible
+
+      
     },
     // 删除背景图
     delBgimg(){
+      var load = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
       if(this.bgImage.length == 1){
         this.$message.info('至少存在一张图片')
         return 
@@ -395,11 +470,25 @@ export default {
 
           this.dataCollection[this.curPage - 1].model.img = this.bgImage[0].imgId
           this.selectImg = null
+
+          // 清空模板按钮选中样式
+          $('#bgimage').prop("checked",false)
+          load.close()
+        } else {
+          load.close()
         }
       })
     },
     // 删除模板
     delModel() {
+      var load = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+
       let that = this,
       id = this.selectModel.id
 
@@ -415,8 +504,14 @@ export default {
           that.$message.success('删除成功！')
           that.invitaModel.filter( (item, idx) => item.id == id && that.invitaModel.splice(idx, 1))
           that.selectModel = null
+
+          // 清空模板按钮选中样式
+          $('#model').prop("checked",false)
+
+          load.close()
         }).catch(err => {
           console.log(err)
+          load.close()
         })
       })
 
@@ -462,6 +557,14 @@ export default {
     },
     // 保存模板
     presModel(e){
+      var load = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.7)'
+      });
+
+
       // HTML5canvas 生成图片
       var that = this
       var opts = {
@@ -471,7 +574,7 @@ export default {
           useCORS: true // 如果截图的内容里有图片,解决文件跨域问题
       }
       // eslint-disable-next-line no-undef
-      html2canvas($('#mc')[0], opts).then((canvas) => {
+      html2canvas($('.phone-long')[0], opts).then((canvas) => {
         var ImageURL = canvas.toDataURL('image/png')
         var myfile = that.dataURLtoFile(ImageURL, Date.now() + '.png');
 
@@ -485,8 +588,8 @@ export default {
             processData: false,
             contentType: false,
             headers: {
-              Authorization: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU',
-              token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3eDV1MTNNQlBrQmtGd3FzV19kaSJ9.beq99TIUC2Pph_yTKBBY_5cHRncktd4WyA8hq9y0mxU'
+              Authorization: token,
+              token
             },
             data: formFile,
             success: function (result) {
@@ -504,8 +607,12 @@ export default {
                   console.log(res)
                   that.$message.success('保存成功！')
                   that.initModel()
+
+                  load.close()
                 }).catch(err => {
                   console.log(err)
+
+                  load.close()
                 })
             }
         })
@@ -561,6 +668,7 @@ export default {
         this.defaultStyle.shadowColor = val;
       }
     },
+
     // 当鼠标在伸缩盒子上按下
     elongateDown: function(e) {
       console.log(e.target, e.screenY)
@@ -594,6 +702,8 @@ export default {
               this_.dataCollection[this_.curPage - 1].model.height -= 5
             }
           }
+
+          $('.content-middle').scrollTop(10000000000000)
         }, 1)
       }
 
@@ -693,7 +803,8 @@ export default {
         if(need == 'update'){
           // 更新 dataCollection.dataPre
           var dataPre = this.dataCollection[this.curPage - 1].dataPre
-          dataPre.filter(item => item.type == '表单' ? item[val] = bool : '')
+          console.log(dataPre)
+          dataPre.filter(item => item.type == '表单' ? item[val] = 'bool' : '')
         }
       }
     },
@@ -854,9 +965,6 @@ export default {
     uploadImage: function(res) {
       console.log(res);
       if (res.code == "000") {
-        // let locationUrl = "/api/filecenter/file/file/" + res.data.id;
-
-        // this.dataCollection[this.curPage - 1].
         this.defaultStyle.url = "/api/filecenter/file/file/" + res.data.id;
 
         // $(this.tNode).find('.invite-text-box-text').css('background-image','url("'+res.src+'")')
@@ -867,6 +975,30 @@ export default {
       }
       this.$refs.elupload.clearFiles();
     }, //uploadImage
+    uploadVedio: function(res) {
+      console.log(res);
+      if (res.code == "000") {
+        this.defaultStyle.url = "/api/filecenter/file/file/" + res.data.id;
+
+        // $(this.tNode).find('.invite-text-box-text').css('background-image','url("'+res.src+'")')
+        $(this.tNode).find('source').attr('src', this.defaultStyle.url);
+        console.log($(this.tNode).find("video")[0])
+        $(this.tNode).find("video")[0].load()
+      }
+      // this.$refs.elupload.clearFiles();
+    },
+    uploadAudio: function(res) {
+      console.log(res);
+      if (res.code == "000") {
+        this.defaultStyle.url = "/api/filecenter/file/file/" + res.data.id;
+
+        // $(this.tNode).find('.invite-text-box-text').css('background-image','url("'+res.src+'")')
+        $(this.tNode).find('source').attr('src', this.defaultStyle.url);
+        $(this.tNode).find("audio")[0].load()
+      }
+      // this.$refs.elupload.clearFiles();
+    },
+
     imageDrag: function(event) {
       event = event || window.event;
       event.dataTransfer.setData("text", "image");
@@ -875,23 +1007,57 @@ export default {
       event = event || window.event;
       event.preventDefault();
     },
+   vdDrag: function(event) {
+      event = event || window.event;
+      event.dataTransfer.setData("text", "vedio");
+    },
+    vdDragover: function(event) {
+      event = event || window.event;
+      event.preventDefault();
+    },
+    vfDrag: function(event) {
+      event = event || window.event;
+      event.dataTransfer.setData("text", "audio");
+    },
+    vfDragover: function(event) {
+      event = event || window.event;
+      event.preventDefault();
+    },
+    scoreDrag: function(event) {
+      event = event || window.event;
+      event.dataTransfer.setData("text", "score");
+    },
+    scoreDragover: function(event) {
+      event = event || window.event;
+      event.preventDefault();
+    },
     save: function(bool = true) {
-      let _this = this;
-
-      let data = {
-        meetingInvitation: JSON.stringify(_this.dataCollection),
+      let _this = this, load
+      if(bool){
+        load = this.$loading({
+          lock: true,
+          text: 'Loading',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.7)'
+        });
       }
 
-      // if(this.id) {
-      //   data.id = this.id
-      // }
+      let data = {
+        dataVal: JSON.stringify(_this.dataCollection),
+        meetingId: this.meetingId
+      }
+
+      if(this.id) {
+        data.id = this.id,
+        data.beginTime = this.beginTime
+      }
 
       localStorage.setItem('dataCollection', data.meetingInvitation)
 
-      // return 
+      // return    + (this.id ? '?id='+this.id : '')
       this.$http
         .post(
-          `/api/meetingcenter/meetingInvitation/meetingInvitation/${this.meetingId}` + (this.id ? '/'+this.id : ''),
+          `/api/meetingcenter/meetingInvitation/meetingInvitation`,
           data
         )
         .then(res => {
@@ -903,19 +1069,25 @@ export default {
                 type: "success",
                 message: "保存成功"
               });
+              load.close()
+            } else {
+              return res.data.id
             }
+            
           }else{
             if(bool){
               _this.$message({
                 type: "error",
                 message: "保存失败，请重试"
               });
-            }
+              load.close()
+            } 
           }
           // _this.generateQrCode();
+        }).catch(err => {
+            load && load.close()
         });
     }, //save
-
     generateQrCode() {
       // 获取二维码父盒子的宽度并将其设置为二维码的高宽
       let obj = document.getElementById("qrcode");
@@ -958,100 +1130,12 @@ export default {
       console.log('initModel')
       this.$http.get(`/api/meetingcenter/meetingTemplate/meetingTemplateFindAll/${this.meetingId}`).then(res => {
         console.log(res)
-        that.invitaModel = res.data
+        if(res.code == '000')
+          that.invitaModel = res.data
       }).catch(err => {
         console.log(err)
         that.invitaModel = []
       })
-    },
-    initPage: function() {
-      console.log("会议邀请函初始化");
-      let mtId = this.meetId ? this.meetId : this.utils.getUrlParma("meetingId");
-      let _this = this;
-      if(!this.isLoad){
-        this.$http.get(`/api/meetingcenter/meetingInvitation/meetingInvitations/meeting/`+mtId)
-        .then(res => {
-          console.log(res);
-          let pages = res.data; 
-          if (pages.length <= 0) {
-            _this.longPageHeightArray.push(649);
-            return;
-          }
-          // this.pageContent = pages;
-          for (let i = 0; i < pages.length; i++) {
-            if (i == 0) {
-              _this.tempData.selBg = {
-                id: "",
-                imgSrc: pages[i].imgsrc
-              };
-              _this.address = pages[i].address;
-              _this.longPageHeight = pages[i].pageHeight || 649;
-              this.generateQrCode();
-            } else {
-              let tmp = {
-                id: (_this.tempData.list[_this.tempData.list.length - 1].id + 1),
-                msg: ""
-              };
-              _this.tempData.list.push(tmp);
-            }
-            _this.longPageHeightArray.push(pages[i].pageHeight)
-            _this.pageContent.push(pages[i].content);
-
-          }
-          
-          // console.log(pages,$('#mc').find('.phone-item'))
-          setTimeout(function() {
-            let items = $("#mc").find(".phone-item");
-            // for (let i = 0; i < items.length; i++) {
-            // 	if (pages[i].content !== "" && pages[i].content !== undefined) {
-            // 		_this.getMatchedStrs(pages[i].content, i);
-            // 		$(items[i]).html(pages[i].content);
-            // 	}
-            // } pageContent
-            let textNodes = $("#mc").find(".textTemplate");
-            for (let i = 0; i < textNodes.length; i++) {
-              initNode(textNodes[i], _this, "文本");
-            }
-            let imageNodes = $("#mc").find(".imageTemplate");
-            for (let i = 0; i < imageNodes.length; i++) {
-              initNode(imageNodes[i], _this, "图片");
-            }
-
-            let formNodes = $("#mc").find(".formTemplate");
-            for (let i = 0; i < formNodes.length; i++) {
-              initNode(formNodes[i], _this);
-            }
-          }, 300);
-        });
-        this.isLoad = true;
-      }
-
-      $(document).keydown(function(e) {
-        // console.log(e);
-        // console.log(_this.tNode);
-        // console.log($(_this.tNode).find(".invite-text-box-border").css("display"));
-        // keyCode等于46为delete键
-        if (!e || e.keyCode != 46) {
-          //不是删除
-          return;
-        }
-        if (!_this.tNode.id) {
-          //没有当前节点
-          return;
-        }
-
-        if (
-          $(_this.tNode)
-          .find(".invite-text-box-border")
-          .css("display") != "block"
-        ) {
-          //不是编辑状态
-          return;
-        }
-        //删除当前编辑的节点
-        nodes.delete(_this.tNode.id);
-        $(_this.tNode).remove();
-      });
     },
     dropTest: function(event) {
       drop(event, this);

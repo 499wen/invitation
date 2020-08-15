@@ -14,14 +14,14 @@
 				</li>
 			</ul> 
 			<div class="imgBtn">
-				<div class="pImg" @click="addPage">  
+				<div class="pImg" @click="addPage">   
 					<img src="./../assets/addpageBtn.png" alt />
 				</div>
 				<p @click="addPage">添加页面</p>
 				<!-- <p @click="presModel">保存模板</p> -->
 			</div>
 		</div>
-
+ 
 		<!-- 手机模板 -->
 		<div class="iContent flex">
 			<div class="content-middle ml15 justify-center" style="padding-right: 15px;width:100%;">
@@ -56,22 +56,46 @@
 						</div>
 					</div>
 				</div>
+			</div>
 
+			<!-- 元素 -->
+			<div class="drap-ele">
+					<ul class="verson text-area" draggable="true" @dragstart="textDrag($event)" @dragover="textDragover($event)" style="padding-left:0px;">
+						<img class="invittext" src="../../public/static/images/invittext.png" title="文本" />
+						<!-- <li>文本</li> -->
+					</ul>
+					<ul class="pl20 verson" draggable="true" @dragstart="imageDrag($event)" @dragover="imageDragover($event)">
+						<img class="invittext" src="../../public/static/images/invitimages.png" title="图片" />
+						<!-- <li>图片</li> -->
+					</ul>
+					<ul class="pl20 verson" draggable="true" @dragstart="vdDrag($event)" @dragover="vdDragover($event)">
+						<img class="invittext" src="../../public/static/images/invitimages.png" title="视频" />
+						<!-- <li>视频</li> -->
+					</ul>
+					<ul class="pl20 verson" draggable="true" @dragstart="vfDrag($event)" @dragover="vfDragover($event)">
+						<img class="invittext" src="../../public/static/images/invitimages.png" title="音频" />
+						<!-- <li>音频</li> -->
+					</ul>
+					<ul class="pl20 verson" draggable="true" @dragstart="scoreDrag($event)" @dragover="scoreDragover($event)">
+						<img class="invittext" src="../../public/static/images/invitimages.png" title="评分" />
+						<!-- <li>评分</li> -->
+					</ul>
+					
 			</div>
 		</div>
 
 		<!-- 元素样式 -->
 		<div class="iRight">
-			<div class="invite-head justify-between" style="padding-left:10px;">
-				<div class="flex" style="margin: 0 auto;">
-					<ul class="verson text-area" draggable="true" @dragstart="textDrag($event)" @dragover="textDragover($event)" style="padding-left:0px;">
+			<div class="invite-head justify-between" style="padding: 0 5px">
+				<div class="flex flex-" style="margin: 0 auto;">
+					<!-- <ul class="verson text-area" draggable="true" @dragstart="textDrag($event)" @dragover="textDragover($event)" style="padding-left:0px;">
 						<img class="invittext" src="../../public/static/images/invittext.png" title="拖拽到手机进行编辑" />
 						<li>文本</li>
 					</ul>
 					<ul class="pl20 verson" draggable="true" @dragstart="imageDrag($event)" @dragover="imageDragover($event)">
 						<img class="invittext" src="../../public/static/images/invitimages.png" title="拖拽到手机进行编辑" />
 						<li>图片</li>
-					</ul>
+					</ul> -->
 					<ul class="pl20 verson" @click="showSubmitForm">
 						<img class="invittext" src="../../public/static/images/invitTable.png" title="点击打开表单设置" />
 						<li>表单</li>
@@ -84,10 +108,10 @@
 						<img class="invittext" width="30" height="30" src="../../public/static/images/model.png" title="点击打开模板" />
 						<li>模板</li>
 					</ul>
-					<ul class="pl20 verson" @click="presModel">
+					<!-- <ul class="pl20 verson" @click="presModel">
 						<img class="invittext" width="30" height="30" src="../../public/static/images/addmodel.png" title="添加模板" />
 						<li>添加模板</li>
-					</ul>
+					</ul> -->
 					<ul class="pl20 verson" @click="save">
 						<img class="invittext" width="30" height="30" src="../../public/static/images/shangchuan.png" title="提交邀请函" />
 						<li>提交</li>
@@ -100,8 +124,8 @@
         </div>-->
 			</div>
 
-			<!--  -->
-			<div id="templateStyle" v-if="tNode && defaultStyle.type != 'form'">
+			<!-- 图片与文本 -->
+			<div id="templateStyle" v-if="tNode && (defaultStyle.type == 'invite-text' || defaultStyle.type == 'image') ">
 				<el-collapse v-model="activeName">
 					<el-collapse-item title="基本样式" name="1" style="padding-right: 0px;">
 						<div class="layui-colla-content layui-show">
@@ -374,20 +398,121 @@
 					</el-collapse-item>
 				</el-collapse>
 			</div>
+
+			<!-- 视频与音频 -->
+			<div id="templateStyle" v-if="tNode && (defaultStyle.type == 'vedio' || defaultStyle.type == 'audio') ">
+				<el-collapse v-model="activeName">
+					<el-collapse-item title="基本样式" name="1" style="padding-right: 0px;">
+						<div class="layui-colla-content layui-show">
+							<div style="display: flex; justify-content: flex-start; align-items: center">
+								<el-upload 
+									v-if="defaultStyle.type == 'vedio'"
+									class="upload-demo"
+									action="/api/filecenter/file/file" :on-success="uploadVedio" ref="elupload"
+								 :headers="headers" accept="video/*" :show-file-list="false"
+								>
+									<el-button size="mini" type="">点击上传</el-button>
+								</el-upload>
+
+								<el-upload 
+									v-if="defaultStyle.type == 'audio'"
+									class="upload-demo"
+									action="/api/filecenter/file/file" :on-success="uploadAudio" ref="elupload"
+								 :headers="headers" accept="audio/*" :show-file-list="false"
+								>
+									<el-button size="mini" type="">点击上传</el-button>
+								</el-upload>
+
+								<el-button size="mini" style="margin-left: 20px" v-if="defaultStyle.type == 'vedio'" @click="widthTile"> 宽度铺满 </el-button>
+
+								<div class="flex invite-progress" style="float:left;margin:10px 20px;">
+									<li class="flex top-floor mr20" @click="changeZindex(9)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/roofplacement.png"
+										 alt />
+										<span>置顶</span>
+									</li>
+									<li class="flex top-floor" @click="changeZindex(1)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/bottomsetting.png"
+										 alt />
+										<span>置底</span>
+									</li>
+								</div>
+								
+							</div>
+						</div>
+					</el-collapse-item>
+				</el-collapse>
+			</div>
+
+			<!-- 视频与音频 -->
+			<div id="templateStyle" v-if="tNode && defaultStyle.type == 'score'">
+				<el-collapse v-model="activeName">
+					<el-collapse-item title="基本样式" name="1" style="padding-right: 0px;">
+						<div class="layui-colla-content layui-show">
+							<div style="display: flex; justify-content: flex-start; align-items: center">
+
+								<div >
+									<span class="mr15 style_label">间距</span>
+									<el-input-number v-model="defaultStyle.marginRight" size="mini" style="width:100px;" controls-position="right" :min="-100" :max="100"></el-input-number>
+								</div>
+
+								<div class="flex invite-progress" style="float:left;margin:10px 20px;">
+									<li class="flex top-floor mr20" @click="changeZindex(9)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/roofplacement.png"
+										 alt />
+										<span>置顶</span>
+									</li>
+									<li class="flex top-floor" @click="changeZindex(1)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/bottomsetting.png"
+										 alt />
+										<span>置底</span>
+									</li>
+								</div>
+								
+							</div>
+						</div>
+					</el-collapse-item>
+				</el-collapse>
+			</div>
+
+			<!-- 表格 -->
+			<div id="templateStyle" v-if="tNode && defaultStyle.type == 'form' ">
+				<el-collapse v-model="activeName">
+					<el-collapse-item title="基本样式" name="1" style="padding-right: 0px;">
+						<div class="layui-colla-content layui-show">
+							<div style="display: flex; justify-content: flex-start; align-items: center">
+
+								<div class="flex invite-progress" style="float:left;margin:10px 20px;">
+									<li class="flex top-floor mr20" @click="changeZindex(9)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/roofplacement.png"
+										 alt />
+										<span>置顶</span>
+									</li>
+									<li class="flex top-floor" @click="changeZindex(1)">
+										<img style="margin-top: 3px;" class="mb10 alignment-mode0" src="../../public/static/images/bottomsetting.png"
+										 alt />
+										<span>置底</span>
+									</li>
+								</div>
+								
+							</div>
+						</div>
+					</el-collapse-item>
+				</el-collapse>
+			</div>
 			<!--  组件样式 end-->
 		</div>
 
 		<!-- 模板中存在的元素列 -->
 		<div class="iRight mini_iRight">
-			<el-collapse v-model="eleColumn" accordion>
-				<el-collapse-item title="元素列" name="1">
-					<div v-if="dataCollection[curPage - 1]">
-						<div class="ele_btn clear_float" v-for="(item,index) in dataCollection[curPage - 1].eleList" :key="item.id">
-							<el-button @click="selectItem(item.id)" :id="'itemId'+item.id">{{item.nodeValue}}({{index+1}})</el-button>
-						</div>
-					</div>
-				</el-collapse-item>
-			</el-collapse>
+			<div class="ele-list">
+				<div>元素列</div>
+			</div>
+			<div v-if="dataCollection[curPage - 1]">
+				<div class="ele_btn clear_float" v-for="(item,index) in dataCollection[curPage - 1].eleList" :key="item.id">
+					<el-button @click="selectItem(item.id)" :id="'itemId'+item.id">{{item.nodeValue}}({{index+1}})</el-button>
+				</div>
+			</div>
 		</div>
 		<!-- 这里是文字的模板 start-->
 		<div class="mr20 ml15">
@@ -428,6 +553,7 @@
 			</div>
 		</div>
 		<!-- 这里是文字的模板 end?-->
+
 		<!--  这里是图片的模板 start-->
 		<div v-show="false" id="imageTemplate" class="imageTemplate" style="height:150px;width:150px">
 			<div class="invite-text-box">
@@ -466,6 +592,144 @@
 			</div>
 		</div>
 		<!--  这里是图片的模板 end-->
+
+		<!--  这里是视频的模板 start-->
+		<div v-show="false" id="vdTemplate" class="imageTemplate" style="height:150px;width:150px">
+			<div class="invite-text-box">
+				<div class="invite-text-box-text video">
+					<video width="100%" height="100%" controls>
+						<!-- ../../public/static/mp4/oooo.mp4 -->
+						<source src="" type="video/mp4">
+					</video>
+				</div>
+				<!-- 右键列表 -->
+				<div class="rightC-list currency">
+					<span class="currency del">删除</span>
+				</div>
+
+				<div class="invite-text-box-border">
+					<div class="invite-text-box-border-container">
+						<div class="invite-text-box-border top-line move-line">
+							<div class="invite-text-box-border line-point s-resize top-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-line move-line">
+							<div class="invite-text-box-border line-point left-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border right-line move-line">
+							<div class="invite-text-box-border line-point right-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border bottom-line move-line">
+							<div class="invite-text-box-border line-point s-resize bottom-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-top-point up-point"></div>
+						<div class="invite-text-box-border right-top-point up-point"></div>
+						<div class="invite-text-box-border left-bottom-point up-point"></div>
+						<div class="invite-text-box-border right-bottom-point up-point"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--  这里是视频的模板 end-->
+
+		<!--  这里是音频的模板 start-->
+		<div v-show="true" id="vfTemplate" class="imageTemplate" style="height:150px;width:150px">
+			<div class="invite-text-box">
+				<div class="invite-text-box-text">
+
+					<audio style="margin: 2%; height: 30px; width: " controls>
+						<source src="">
+					</audio>
+
+					<!-- <div class="audio">
+						<div class="img-box">
+							<img src="../../public/static/images/play.png" v-if="audio.img" width="10px" height="15px" alt="">
+							<img src="../../public/static/images/suspend.png" v-if="!audio.img" width="20px" height='20px' alt="">
+						</div>
+					</div> -->
+
+				</div>
+				<!-- 右键列表 -->
+				<div class="rightC-list currency">
+					<span class="currency del">删除</span>
+				</div>
+
+				<div class="invite-text-box-border">
+					<div class="invite-text-box-border-container">
+						<div class="invite-text-box-border top-line move-line">
+							<div class="invite-text-box-border line-point s-resize top-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-line move-line">
+							<div class="invite-text-box-border line-point left-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border right-line move-line">
+							<div class="invite-text-box-border line-point right-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border bottom-line move-line">
+							<div class="invite-text-box-border line-point s-resize bottom-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-top-point up-point"></div>
+						<div class="invite-text-box-border right-top-point up-point"></div>
+						<div class="invite-text-box-border left-bottom-point up-point"></div>
+						<div class="invite-text-box-border right-bottom-point up-point"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--  这里是音频的模板 end-->
+
+		<!--  这里是评分的模板 start-->
+		<div v-show="false" id="scoreTemplate" class="imageTemplate" style="height:150px;width:60px">
+			<div class="invite-text-box">
+				<div class="invite-text-box-text">
+					<div class="score">
+						<img src="../../public/static/images/star01.png" draggable="false" alt="">
+						<img src="../../public/static/images/star01.png" draggable="false" alt="">
+						<img src="../../public/static/images/star01.png" draggable="false" alt="">
+						<img src="../../public/static/images/star01.png" draggable="false" alt="">
+						<img src="../../public/static/images/star01.png" draggable="false" alt="">
+					</div>
+				</div>
+				<!-- 右键列表 -->
+				<div class="rightC-list currency">
+					<span class="currency del">删除</span>
+				</div>
+
+				<div class="invite-text-box-border">
+					<div class="invite-text-box-border-container">
+						<div class="invite-text-box-border top-line move-line">
+							<div class="invite-text-box-border line-point s-resize top-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-line move-line">
+							<div class="invite-text-box-border line-point left-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border right-line move-line">
+							<div class="invite-text-box-border line-point right-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border bottom-line move-line">
+							<div class="invite-text-box-border line-point s-resize bottom-line-point"></div>
+						</div>
+
+						<div class="invite-text-box-border left-top-point up-point"></div>
+						<div class="invite-text-box-border right-top-point up-point"></div>
+						<div class="invite-text-box-border left-bottom-point up-point"></div>
+						<div class="invite-text-box-border right-bottom-point up-point"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--  这里是评分的模板 end-->
+
 		<!-- 这里是表单的模板 start-->
 		<div v-show="false" id="formTemplate" class="formTemplate">
 			<div class="invite-text-box">
@@ -552,7 +816,7 @@
 					<div class="popup_item" v-for="(item, idx) in bgImage" :key="idx">
 						<img :src="'/api/filecenter/file/file/' + item.imgId" alt="">
 						<div>
-							<input type="radio"  name="bgImgRadio" id="" @click="changeBgImg(idx)">
+							<input type="radio"  name="bgImgRadio" id="bgimage" @click="changeBgImg(idx)">
 						</div>
 					</div>
 				</div>
@@ -577,14 +841,18 @@
 		<div class="popup_bg" v-show="popupModel">
 			<div class="white_box">
 				<div class="popup_titile">
-					选择模板
+					模板
 				</div>
+				<div class="function">
+					<el-button size="small" @click="presModel"> 保存当前模板 </el-button>
+				</div>
+
 				<div class="popup_cente">
 
 					<div class="popup_item" v-for="(item, idx) in invitaModel" :key="idx">
 						<img :src="'/api/filecenter/file/file/'+item.imgId" alt="">
 						<div>
-							<input type="radio" name="bgImgRadio" id="" @click="changeBgModel(idx)">
+							<input type="radio" name="bgImgRadio" id="model" @click="changeBgModel(idx)">
 						</div>
 					</div>
 
@@ -659,12 +927,114 @@
 	@import "../../public/static/text.css";
 </style>
 <style lang="less">
+	.audio {
+		width: 100%;
+		height: 25px;
+		align-items: center;
+		border-radius: 500px;
+		background-color: #fff;
+		display: flex;
+		padding: 0 10px;
+		box-sizing: border-box;
+
+		.img-box {
+			width: 30px;
+			text-align: center;
+			height: 100%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+
+  .video {
+		padding: 2%;
+		box-sizing: border-box;
+	}
+
+	.function {
+		width: 100%;
+		padding: 10px;
+		box-sizing: border-box;
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+	}
+
+	.justify-between {
+		height: 80px;
+		box-sizing: border-box;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		ul {
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+	}
+
+	.ele-list {
+		width: 100%;
+		height: 80px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 15px;
+		color: #333;
+
+		div {
+			width: 100%;
+			height: auto;
+			background-color: #ddd;
+			padding: 10px 0;
+		}
+	}
+
+	.score {
+		width: 100%;
+		display: flex;
+		min-width: 100px;
+		justify-content: center;
+		align-items: center;
+		padding: 0 10px;
+		box-sizing: border-box;
+
+		& > img {
+			width: 18%;
+			height: auto;
+			margin-right: 5px;
+		}
+	}
+
+	.drap-ele {
+		position: absolute;
+		width: 50px;
+		background-color: #ccc;
+		right: 10px;
+		top: 70px;
+		height: 50%;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-content: flex-start;
+		padding: 10px 0;
+		box-sizing: border-box;
+
+		ul, li {
+			margin: 5px 0;
+			padding: 0;
+		}
+	}
+
 	.content-middle {
 		display: flex;
 		flex-wrap: wrap;
 		align-content: flex-start;
 		padding-top: 50px;
+		overflow-y: auto;
 		box-sizing: border-box;
+		position: relative;
 
 		.content-middle-type {
 			width: 100%;
@@ -788,6 +1158,7 @@
 	ul,
 	li {
 		list-style: none;
+		// margin: 0;
 	}
 
 	.po-r {
@@ -832,6 +1203,12 @@
 		height: 130px;
 		margin: 0 auto;
 	}
+	.flex- {
+		display: flex;
+		width: 100%;
+		justify-content: space-around !important;
+	}
+
 	.flex {
 		display: flex;
 	}
@@ -949,7 +1326,8 @@
 			height: 93%;
 			min-width: 560px;
 			overflow-x: visible;
-			overflow-y: auto;
+			position: relative;
+			// overflow-y: auto;
 			box-sizing: border-box;
 			background-color: #f4f4f4;
 		}
@@ -1089,6 +1467,7 @@
 
 		.verson {
 			cursor: pointer;
+			text-align: center;
 		}
 
 		.page_txt {
@@ -1207,7 +1586,7 @@
 			height: 630px;
 			position: absolute;
 			top: 0px;
-			left: 5px;
+			// left: 5px;
 		}
 	}
 

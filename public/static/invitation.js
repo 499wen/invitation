@@ -7,10 +7,10 @@ let mouseIsDown = false;
 let currentNode;
 let mouseX = 0;
 let mouseY = 0;
-let nodeX = 0;
+let nodeX = 0; 
 let nodeY = 0; 
 let nodeWidth;  
-let nodeHeight;
+let nodeHeight; 
 
 let moveMethod;
 let vue = null
@@ -84,12 +84,48 @@ var imgStyle = {
 	"shadowDirectionV":0,  // 阴影水平方向移动
 	"shadowDirectionH":0,  // 阴影垂直方向移动
 	"z-index": '5', // 元素层级 最底层：1 默认：5 最顶层：9
-	'el-x': '', // 创建的文本元素距离模板左的距离
-	'el-y': '', // 创建的文本元素距离模板上的距离
-	"width": '120px', // 文本基础宽度
-	"height": '120px', // 文本基础高度
+	'el-x': '', // 创建的图片元素距离模板左的距离
+	'el-y': '', // 创建的图片元素距离模板上的距离
+	"width": '120px', // 基础宽度
+	"height": '120px', // 基础高度
 	
 	"url": '', // 图片id
+}
+
+// 评分
+var scoreStyle = {
+	"z-index": '5', // 元素层级 最底层：1 默认：5 最顶层：9
+	'el-x': '', // 创建的评分元素距离模板左的距离
+	'el-y': '', // 创建的评分元素距离模板上的距离
+	"width": '160px', // 基础宽度
+	"height": '30px', // 基础高度
+	// "opacity": 100, // 透明度
+
+	"marginRight": '3'
+}
+
+// 音频
+var vfStyle = {
+	"z-index": '5', // 元素层级 最底层：1 默认：5 最顶层：9
+	'el-x': '', // 创建的音频元素距离模板左的距离
+	'el-y': '', // 创建的音频元素距离模板上的距离
+	"width": '320px', // 基础宽度
+	"height": '40px', // 基础高度
+	"opacity": 100, // 透明度
+
+	"url": '', // 音频id
+}
+
+// 视频
+var vdStyle = {
+	"z-index": '5', // 元素层级 最底层：1 默认：5 最顶层：9
+	'el-x': '', // 创建的视频元素距离模板左的距离
+	'el-y': '', // 创建的视频元素距离模板上的距离
+	"width": '120px', // 基础宽度
+	"height": '120px', // 基础高度
+	"opacity": 100, // 透明度
+
+	"url": '', // 视频id
 }
 
 import $, { data } from 'jquery'
@@ -156,6 +192,30 @@ export function drop(event, _this) {
 		defaultStyle = imgStyle
 		// 元素样式配置
 		_this.isImage = true
+	} else if (data == 'vedio'){
+		nodeValue = "视频"; 
+		node = document.getElementById('vdTemplate').cloneNode(true);
+		// 将元素 默认数据 统一保存在defaultStyle 对象中
+		defaultStyle = vdStyle
+		// // 元素样式配置
+		// _this.isImage = true
+		// return
+	} else if (data == 'audio'){
+		nodeValue = "音频"; 
+		node = document.getElementById('vfTemplate').cloneNode(true);
+		// 将元素 默认数据 统一保存在defaultStyle 对象中
+		defaultStyle = vfStyle
+		// // 元素样式配置
+		// _this.isImage = true
+		// return
+	} else if (data == 'score'){
+		nodeValue = "评分"; 
+		node = document.getElementById('scoreTemplate').cloneNode(true);
+		// 将元素 默认数据 统一保存在defaultStyle 对象中
+		defaultStyle = scoreStyle
+		// // 元素样式配置
+		// _this.isImage = true
+		// return
 	}
 
 	// 给元素添加  右键事件
@@ -383,6 +443,12 @@ function renderingDom(elType, obj){
 	if(elType == 'image'){
 		// url
 		tNode.style.backgroundColor = obj['url']
+	} else 
+	// 评分
+	if(elType == 'score'){
+		console.log(`obj['marginRight']: `, obj['marginRight'])
+		// 设置星星的间距
+		$(tNode).find('img').css('margin-right', obj['marginRight'] + 'px')
 	}
 }
 
@@ -391,6 +457,7 @@ let formData = {
 	'el-y': 50,
 	'width': '80%',
 	'height': '320',
+	'z-index': 5,
 
 	formAttr: {
 		'enable': true, // 使用表单标记
@@ -451,15 +518,16 @@ export function addSubmitForm(_this) {
 	node.id = uuid()
 	$(node).css('display', 'block')
 	$($('#mc').find('.phone-item')[_this.showKey]).append(node);
-
+	$(node).find('.invite-text-box-border').css('display', 'block')
 	/**
 	 * 渲染表单dom 
 	 * 
 	 */
 	$(node).css({
-		'transform': `translate(${formData['el-x']}px,${formData['el-y']}px)`,
+		'transform': `translate(${formData['el-x']}px, ${formData['el-y']}px)`,
 		'width': `${formData.width}`,
 		'height': `${formData.height}px`,
+		'z-index': `${formData['z-index']}`
 	})
 
 	// 覆盖 dataCollection.formAttr
@@ -474,7 +542,7 @@ export function addSubmitForm(_this) {
 	eleList.push({id: node.id, nodeValue: '表单'})
 
 	_this.defaultStyle = formData
-
+	_this.tNode = node
 	console.log(dataPre, eleList)
 	// initNode(node, _this)
 // return 
@@ -482,8 +550,16 @@ export function addSubmitForm(_this) {
 		e.stopPropagation()
 		e.preventDefault()
 		hideBox()
+		$('.invite-text-box-border').css('display', 'none')
+
 		$(this).find('.invite-text-box-border').css('display', 'block')
 		// _this.initTemplateCss(this)
+		// 获取元素 id
+		let id = $(node).attr('id')
+
+		// 拿到 dataCollection 中与 id匹配的数据 把数据赋值给 vue.defaultStyle
+		let dataPre = vue.dataCollection[vue.curPage - 1].dataPre
+		dataPre.filter( item => item.key == id ? vue.defaultStyle = item.value : '')
 		
 		if(_this.activeName.length === 0){
 			_this.activeName.push("1")
@@ -673,6 +749,22 @@ export function reduction(_this){
 			defaultStyle = item.value
 			// 元素样式配置
 			_this.isImage = false
+
+		} else if (data == 'vedio'){
+			node = document.getElementById('vdTemplate').cloneNode(true);
+			// 将元素 默认数据 统一保存在defaultStyle 对象中
+			defaultStyle = item.value
+
+		} else if (data == 'audio'){
+			node = document.getElementById('vfTemplate').cloneNode(true);
+			// 将元素 默认数据 统一保存在defaultStyle 对象中
+			defaultStyle = item.value
+
+		} else if (data == 'score'){
+			node = document.getElementById('scoreTemplate').cloneNode(true);
+			// 将元素 默认数据 统一保存在defaultStyle 对象中
+			defaultStyle = item.value
+
 		}
 
 		node.id = item.key
@@ -711,7 +803,20 @@ export function reduction(_this){
 			// 获取文本内容
 			// console.log($(node).find('.invite-text-box'))
 			$(node).find('.invite-text-box-text')[0].innerText = defaultStyle.url ? ' ' :  '请上传图片1'
-		} else {
+		} else if (data == 'vedio'){
+			renderingDom(data, defaultStyle)
+
+			$(node).find('source').attr('src', defaultStyle.url)
+
+		} else if (data == 'audio'){
+			renderingDom(data, defaultStyle)
+
+			$(node).find('source').attr('src', defaultStyle.url)
+
+		} else if (data == 'score'){
+			renderingDom(data, defaultStyle)
+
+		} else if(data == 'form'){
 			/**
 			 * 渲染表单dom 
 			 * 
